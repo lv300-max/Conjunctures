@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Engine Room — Math Workbench</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --bg:#02060b;
+  --panel:#071522;
+  --panel2:#0b2033;
+  --line:#16425c;
+  --text:#e6f8ff;
+  --muted:#9bb5c7;
+  --cyan:#7ee7ff;
+  --green:#7dff9b;
+  --yellow:#ffd86b;
+  --red:#ff7373;
+  --orange:#ffae5d;
+  --purple:#c9a7ff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(0,220,255,.15), transparent 30%),
+    radial-gradient(circle at 90% 20%, rgba(130,90,255,.12), transparent 30%),
+    linear-gradient(180deg,#02060b,#050b12 45%,#010409);
+  color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.wrap{
+  max-width:1300px;
+  margin:auto;
+  padding:14px;
+}
+
+h1{
+  margin:8px 0 4px;
+  color:var(--cyan);
+  font-size:26px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:14px;
+}
+
+.panel{
+  background:rgba(7,21,34,.94);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 0 24px rgba(0,200,255,.08);
+  margin-bottom:12px;
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+input, select, button{
+  border:1px solid #1f6f94;
+  background:#020812;
+  color:var(--text);
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+button{
+  background:#07344c;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:hover{
+  background:#0b5174;
+}
+
+.btn-main{
+  background:#075f7b;
+  border-color:#45dfff;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+@media(max-width:1000px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:650px){
+  .grid{grid-template-columns:1fr}
+}
+
+.card{
+  background:#06131f;
+  border:1px solid #12384f;
+  border-radius:14px;
+  padding:12px;
+  min-height:140px;
+}
+
+.card h3{
+  margin:0 0 6px;
+  color:#bdf3ff;
+  font-size:16px;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid #234d66;
+  margin:2px 4px 2px 0;
+}
+
+.toy{color:var(--purple)}
+.scan{color:var(--cyan)}
+.cert{color:var(--green)}
+.proof{color:var(--orange)}
+.open{color:var(--yellow)}
+.fail{color:var(--red)}
+.pass{color:var(--green)}
+.muted{color:var(--muted)}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+th,td{
+  border-bottom:1px solid #12384f;
+  padding:8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:#9be9ff;
+  background:#06111d;
+  position:sticky;
+  top:0;
+}
+
+.scroll{
+  max-height:440px;
+  overflow:auto;
+  border:1px solid #102f44;
+  border-radius:12px;
+}
+
+pre{
+  background:#020812;
+  border:1px solid #12384f;
+  border-radius:12px;
+  padding:10px;
+  overflow:auto;
+  max-height:360px;
+  font-size:12px;
+}
+
+.small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.bar{
+  height:8px;
+  background:#06101a;
+  border:1px solid #153e56;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:6px;
+}
+
+.fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#26d9ff,#7dff9b);
+  transition:.25s;
+}
+
+.engine-title{
+  color:var(--cyan);
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Engine Room</h1>
+<div class="sub">
+  Master list of your current math workbench engines. This does not prove the conjectures.
+  It organizes the tools by level: toy, scan, certificate, proof-critical.
+</div>
+
+<div class="panel">
+  <div class="controls">
+    <input id="searchBox" placeholder="Search engine..." oninput="render()" />
+
+    <select id="familyFilter" onchange="render()">
+      <option value="ALL">All Families</option>
+      <option value="Collatz Path">Collatz Path</option>
+      <option value="Collatz Certificate">Collatz Certificate</option>
+      <option value="Five Conjecture">Five Conjecture</option>
+      <option value="Goldbach">Goldbach</option>
+      <option value="Visual App">Visual App</option>
+    </select>
+
+    <select id="levelFilter" onchange="render()">
+      <option value="ALL">All Levels</option>
+      <option value="Toy">Toy</option>
+      <option value="Scanner">Scanner</option>
+      <option value="Certificate">Certificate</option>
+      <option value="Proof-Critical">Proof-Critical</option>
+      <option value="Open">Open</option>
+    </select>
+
+    <button class="btn-main" onclick="runAudit()">Run Engine Audit</button>
+    <button onclick="exportJSON()">Export Engine List</button>
+    <button onclick="copySummary()">Copy Summary</button>
+  </div>
+</div>
+
+<div class="grid" id="cards"></div>
+
+<div class="panel">
+  <h2>Engine Table</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th>
+          <th>Family</th>
+          <th>Level</th>
+          <th>Status</th>
+          <th>What it does</th>
+          <th>Next action</th>
+        </tr>
+      </thead>
+      <tbody id="engineBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Audit Output</h2>
+  <pre id="auditOut">Click Run Engine Audit...</pre>
+</div>
+
+</div>
+
+<script>
+const ENGINES = [
+  /* Collatz Path Engines */
+  {
+    name:"Even Law Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Checks even numbers drop by n / 2.",
+    next:"Keep as base law."
+  },
+  {
+    name:"Odd Law Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Checks odd numbers using 3n + 1.",
+    next:"Track forced division count after odd rise."
+  },
+  {
+    name:"Below-Start Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"Marks seed OUT once it drops below its start.",
+    next:"Use as clean descent witness."
+  },
+  {
+    name:"Smaller-Odd Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"Marks odd seed OUT once it hits a smaller odd.",
+    next:"Connect to induction wording."
+  },
+  {
+    name:"Known-Out Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"Marks seed OUT if it reaches 1, 2, 4, or known solved rows.",
+    next:"Keep known-out list exportable."
+  },
+  {
+    name:"Double Law Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"If n is OUT, then 2n, 4n, 8n are also OUT.",
+    next:"Show as octave chain."
+  },
+  {
+    name:"Merge Law Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"If two paths hit the same number, they share the same future.",
+    next:"Store merge witness rows."
+  },
+  {
+    name:"Path Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Builds the full Collatz path from a seed.",
+    next:"Keep BigInt safe."
+  },
+  {
+    name:"Step Counter Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Counts total steps in a path.",
+    next:"Track worst seed per range."
+  },
+  {
+    name:"Rise/Drop Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Counts odd rises and even drops.",
+    next:"Compare to log2(3) threshold."
+  },
+  {
+    name:"Max Peak Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Records highest value reached.",
+    next:"Use for delay corridor."
+  },
+  {
+    name:"Ratio Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Compares rises vs drops.",
+    next:"Add decay phase line."
+  },
+  {
+    name:"Collector Ladder Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Tracks hits into 184 → 40 → 16 → 8 → 4 → 2 → 1.",
+    next:"Keep as pattern, not proof."
+  },
+  {
+    name:"Lane Split Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Groups paths around powers of 2 and octaves.",
+    next:"Add visual lane map."
+  },
+  {
+    name:"Octave Engine",
+    family:"Collatz Path",
+    level:"Certificate",
+    status:"PASS",
+    does:"Tracks n, 2n, 4n, 8n as same-family copies.",
+    next:"Link to Double Law."
+  },
+  {
+    name:"Delay Corridor Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"OPEN",
+    does:"Finds seeds that stay high before dropping.",
+    next:"Define exact delay metric."
+  },
+  {
+    name:"Greyhole Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"OPEN",
+    does:"Looks for zones that pull many paths inward.",
+    next:"Define collector zones mathematically."
+  },
+  {
+    name:"Fingerprint Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Turns paths into repeat patterns like L/M strings.",
+    next:"Group by odd core and compare."
+  },
+  {
+    name:"Visual Band Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows dark/light grouped bands in fingerprints.",
+    next:"Add heatmap export."
+  },
+  {
+    name:"Family Group Engine",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Groups seeds by odd core. Example: 82648 → 41324 → 20662 → 10331.",
+    next:"Use as table grouping key."
+  },
+  {
+    name:"Any-N Scanner",
+    family:"Collatz Path",
+    level:"Scanner",
+    status:"PASS",
+    does:"Runs checks over every number up to N.",
+    next:"Add range checkpoints."
+  },
+
+  /* Collatz Certificate Engines */
+  {
+    name:"Residue Partition Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Splits odd residues mod 2^16.",
+    next:"Define why this covers the intended base universe."
+  },
+  {
+    name:"Missing/Duplicate Audit Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks no residue is missing or repeated.",
+    next:"Keep exact report attached."
+  },
+  {
+    name:"Valuation Forcing Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks same division pattern is forced for a residue class.",
+    next:"State as lemma with modulus."
+  },
+  {
+    name:"Affine Formula Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Builds T^m(n) = (3^o n + b) / 2^c.",
+    next:"Export m,o,c,b per row."
+  },
+  {
+    name:"Gap Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Computes gap = 2^c - 3^o.",
+    next:"Reject rows where gap <= 0."
+  },
+  {
+    name:"Bound Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Computes B = ceil(b / gap).",
+    next:"Use integer formula only."
+  },
+  {
+    name:"Descent Certificate Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks if n > B, then T^m(n) < n.",
+    next:"Make reviewer-facing proof statement."
+  },
+  {
+    name:"Lift Closure Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks lifted values keep same certificate.",
+    next:"Prove valuation word survives lifting."
+  },
+  {
+    name:"Exact-State Closure Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Verifies full state, not just shortcut key.",
+    next:"Keep this as main anti-gap engine."
+  },
+  {
+    name:"Parent Coverage Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks parent rows are closed.",
+    next:"Show 578/578 summary."
+  },
+  {
+    name:"Local Key Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Finds unresolved local states.",
+    next:"Keep zero-open-key report."
+  },
+  {
+    name:"Quotient Audit Engine",
+    family:"Collatz Certificate",
+    level:"Open",
+    status:"OPEN",
+    does:"Tests whether quotient abstraction loses proof-critical state.",
+    next:"Either prove it preserves state or remove quotient shortcut."
+  },
+  {
+    name:"Packet Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Builds the 84-row symbolic certificate packet.",
+    next:"Define packet universe clearly."
+  },
+  {
+    name:"Packet Label Invariant Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks packet labels are unique and transitions are valid.",
+    next:"Keep invariant report."
+  },
+  {
+    name:"Transition Table Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Checks symbolic row-to-row movement.",
+    next:"Export transition table."
+  },
+  {
+    name:"Framework Closure Audit Engine",
+    family:"Collatz Certificate",
+    level:"Proof-Critical",
+    status:"PASS",
+    does:"Final combined pass/fail audit.",
+    next:"Use as top-level report."
+  },
+
+  /* Five Conjecture Engines */
+  {
+    name:"Goldbach Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Checks even numbers are prime + prime.",
+    next:"Add certificate hash per even number."
+  },
+  {
+    name:"Twin Prime Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Finds prime pairs p and p + 2.",
+    next:"Track gaps between twin-prime starts."
+  },
+  {
+    name:"Riemann Surface Engine",
+    family:"Five Conjecture",
+    level:"Toy",
+    status:"PASS",
+    does:"Compares prime count π(n) to n / log(n).",
+    next:"Upgrade to li(x) and explicit error plots."
+  },
+  {
+    name:"P vs NP Toy Engine",
+    family:"Five Conjecture",
+    level:"Toy",
+    status:"PASS",
+    does:"Runs small subset-sum find/check test.",
+    next:"Do not label as proof. Toy only."
+  },
+  {
+    name:"BSD Toy Curve Engine",
+    family:"Five Conjecture",
+    level:"Toy",
+    status:"PASS",
+    does:"Searches integer points on y² = x³ + ax + b.",
+    next:"Add singular-curve check."
+  },
+  {
+    name:"Collatz Bridge Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Sanity-checks Collatz inside same scanner.",
+    next:"Keep separate from proof engine."
+  },
+  {
+    name:"Certificate Table Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Makes witness rows.",
+    next:"Export witness rows."
+  },
+  {
+    name:"Open Leaf Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows failures, unknowns, and next actions.",
+    next:"Make open leaves clickable."
+  },
+  {
+    name:"Proof Packet Export Engine",
+    family:"Five Conjecture",
+    level:"Scanner",
+    status:"PASS",
+    does:"Exports JSON report.",
+    next:"Add hash."
+  },
+
+  /* Goldbach Engines */
+  {
+    name:"Center Mirror Engine",
+    family:"Goldbach",
+    level:"Scanner",
+    status:"PASS",
+    does:"Uses E / 2 as center.",
+    next:"Show left/right prime mirror."
+  },
+  {
+    name:"Gap Pair Engine",
+    family:"Goldbach",
+    level:"Scanner",
+    status:"PASS",
+    does:"Checks center - g and center + g.",
+    next:"Render as rings."
+  },
+  {
+    name:"Prime Pair Engine",
+    family:"Goldbach",
+    level:"Certificate",
+    status:"PASS",
+    does:"Confirms both sides are prime.",
+    next:"Save witness p + q = E."
+  },
+  {
+    name:"Bullseye Ring Engine",
+    family:"Goldbach",
+    level:"Scanner",
+    status:"OPEN",
+    does:"Treats gaps like rings around center.",
+    next:"Build visual ring map."
+  },
+  {
+    name:"Rotating Ring Engine",
+    family:"Goldbach",
+    level:"Toy",
+    status:"OPEN",
+    does:"Tests wheel-style gap alignment.",
+    next:"Define rotation rule."
+  },
+  {
+    name:"Side-Cover Engine",
+    family:"Goldbach",
+    level:"Proof-Critical",
+    status:"OPEN",
+    does:"Marks gaps blocked by composites.",
+    next:"Prove large primes cannot cover all survivor gaps."
+  },
+  {
+    name:"Survivor Engine",
+    family:"Goldbach",
+    level:"Scanner",
+    status:"OPEN",
+    does:"Tracks gaps not killed by small primes.",
+    next:"Count survivors per even number."
+  },
+  {
+    name:"Wall-Break Engine",
+    family:"Goldbach",
+    level:"Open",
+    status:"OPEN",
+    does:"Looks for why all gaps cannot be blocked.",
+    next:"This is the real theorem target."
+  },
+  {
+    name:"Certificate Hash Engine",
+    family:"Goldbach",
+    level:"Certificate",
+    status:"OPEN",
+    does:"Saves verified Goldbach witnesses.",
+    next:"Add SHA-256 hash packet."
+  },
+
+  /* Visual App Engines */
+  {
+    name:"Table Renderer Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows rows and columns.",
+    next:"Keep fast for large N."
+  },
+  {
+    name:"Dark/Light Band Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Turns repeated fingerprints into visual paint bands.",
+    next:"Add color grouping by family."
+  },
+  {
+    name:"Zoom-In Pattern Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows close-up repeating groups.",
+    next:"Add side-by-side compare."
+  },
+  {
+    name:"Highlight Box Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Draws boxes around repeated rows.",
+    next:"Make automatic pattern detection."
+  },
+  {
+    name:"Pass/Fail Dashboard Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows PASS, FAIL, OPEN.",
+    next:"Add proof level badges."
+  },
+  {
+    name:"Raw JSON Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Shows full machine-readable report.",
+    next:"Add copy button."
+  },
+  {
+    name:"Export Engine",
+    family:"Visual App",
+    level:"Scanner",
+    status:"PASS",
+    does:"Downloads report files.",
+    next:"Add timestamp and hash."
+  }
+];
+
+function render(){
+  const q = document.getElementById("searchBox").value.toLowerCase().trim();
+  const fam = document.getElementById("familyFilter").value;
+  const lvl = document.getElementById("levelFilter").value;
+
+  const list = ENGINES.filter(e => {
+    const text = `${e.name} ${e.family} ${e.level} ${e.status} ${e.does} ${e.next}`.toLowerCase();
+    if(q && !text.includes(q)) return false;
+    if(fam !== "ALL" && e.family !== fam) return false;
+    if(lvl !== "ALL" && e.level !== lvl) return false;
+    return true;
+  });
+
+  renderCards(list);
+  renderTable(list);
+}
+
+function renderCards(list){
+  const cards = document.getElementById("cards");
+  const total = list.length;
+  const pass = list.filter(e=>e.status==="PASS").length;
+  const open = list.filter(e=>e.status==="OPEN").length;
+  const proof = list.filter(e=>e.level==="Proof-Critical").length;
+  const cert = list.filter(e=>e.level==="Certificate").length;
+
+  const data = [
+    {title:"Visible Engines", value:total, label:"currently shown", cls:"scan", pct:100},
+    {title:"PASS", value:pass, label:"working / stable", cls:"pass", pct:total ? pass/total*100 : 0},
+    {title:"OPEN", value:open, label:"needs definition/proof", cls:"open", pct:total ? open/total*100 : 0},
+    {title:"Proof-Critical", value:proof, label:"reviewer-important", cls:"proof", pct:total ? proof/total*100 : 0}
+  ];
+
+  cards.innerHTML = data.map(c => `
+    <div class="card">
+      <h3>${esc(c.title)}</h3>
+      <div class="${c.cls}" style="font-size:28px;font-weight:bold;">${c.value}</div>
+      <div class="small">${esc(c.label)}</div>
+      <div class="bar"><div class="fill" style="width:${c.pct}%"></div></div>
+    </div>
+  `).join("");
+}
+
+function renderTable(list){
+  const body = document.getElementById("engineBody");
+  body.innerHTML = "";
+
+  for(const e of list){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="engine-title">${esc(e.name)}</span></td>
+      <td>${esc(e.family)}</td>
+      <td><span class="badge ${levelClass(e.level)}">${esc(e.level)}</span></td>
+      <td><span class="${statusClass(e.status)}">${esc(e.status)}</span></td>
+      <td>${esc(e.does)}</td>
+      <td>${esc(e.next)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function runAudit(){
+  const byFamily = {};
+  const byLevel = {};
+  const byStatus = {};
+
+  for(const e of ENGINES){
+    byFamily[e.family] = (byFamily[e.family] || 0) + 1;
+    byLevel[e.level] = (byLevel[e.level] || 0) + 1;
+    byStatus[e.status] = (byStatus[e.status] || 0) + 1;
+  }
+
+  const openEngines = ENGINES.filter(e=>e.status==="OPEN");
+  const proofCriticalOpen = ENGINES.filter(e=>e.status==="OPEN" && e.level==="Proof-Critical");
+
+  const audit = {
+    title:"Engine Room Audit",
+    created:new Date().toISOString(),
+    totalEngines:ENGINES.length,
+    byFamily,
+    byLevel,
+    byStatus,
+    mainWarning:"Toy and scanner engines are useful, but they are not proof.",
+    biggestNeed: proofCriticalOpen.length
+      ? "Close proof-critical open engines first."
+      : "No proof-critical engines are marked open in this list.",
+    proofCriticalOpen,
+    allOpenEngines:openEngines,
+    nextBestMoves:[
+      "Separate toy engines from proof engines.",
+      "Give every certificate engine a JSON witness.",
+      "Give every proof-critical engine a written lemma.",
+      "For Collatz, remove or fully prove quotient abstraction.",
+      "For Goldbach, define the side-cover / survivor theorem clearly."
+    ]
+  };
+
+  document.getElementById("auditOut").textContent = JSON.stringify(audit,null,2);
+}
+
+function exportJSON(){
+  const packet = {
+    title:"Engine Room Export",
+    created:new Date().toISOString(),
+    engines:ENGINES
+  };
+
+  const blob = new Blob([JSON.stringify(packet,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "engine_room_export.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copySummary(){
+  const pass = ENGINES.filter(e=>e.status==="PASS").length;
+  const open = ENGINES.filter(e=>e.status==="OPEN").length;
+  const proof = ENGINES.filter(e=>e.level==="Proof-Critical").length;
+
+  const text =
+`ENGINE ROOM SUMMARY
+
+Total engines: ${ENGINES.length}
+PASS: ${pass}
+OPEN: ${open}
+Proof-critical: ${proof}
+
+Main families:
+- Collatz Path
+- Collatz Certificate
+- Five Conjecture
+- Goldbach
+- Visual App
+
+Main warning:
+Toy/scanner engines are not proof. Certificate/proof-critical engines need exact witness rows and written lemmas.`;
+
+  navigator.clipboard.writeText(text).then(()=>{
+    alert("Summary copied.");
+  });
+}
+
+function statusClass(s){
+  if(s === "PASS") return "pass";
+  if(s === "FAIL") return "fail";
+  if(s === "OPEN") return "open";
+  return "muted";
+}
+
+function levelClass(l){
+  if(l === "Toy") return "toy";
+  if(l === "Scanner") return "scan";
+  if(l === "Certificate") return "cert";
+  if(l === "Proof-Critical") return "proof";
+  if(l === "Open") return "open";
+  return "muted";
+}
+
+function esc(x){
+  return String(x)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+render();
+</script>
+
+</body>
+</html>

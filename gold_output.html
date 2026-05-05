@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Gold Output — Four Conjecture Scanner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --bg:#050504;
+  --panel:#11100b;
+  --panel2:#181509;
+  --line:#6d5520;
+  --gold:#ffd76a;
+  --gold2:#ffb928;
+  --gold3:#fff1a8;
+  --text:#fff8df;
+  --muted:#b7a875;
+  --green:#7dff9b;
+  --red:#ff7070;
+  --orange:#ffb35c;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255,215,106,.18), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(255,185,40,.13), transparent 32%),
+    linear-gradient(180deg,#030302,#090804 45%,#020201);
+  color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.wrap{
+  max-width:1250px;
+  margin:auto;
+  padding:14px;
+}
+
+h1{
+  color:var(--gold);
+  margin:8px 0 4px;
+  font-size:26px;
+  text-shadow:0 0 14px rgba(255,215,106,.28);
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:12px;
+}
+
+.panel{
+  background:rgba(17,16,11,.94);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 0 26px rgba(255,190,50,.08);
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+input, button{
+  border:1px solid #8d6f25;
+  background:#070604;
+  color:var(--text);
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+button{
+  cursor:pointer;
+  background:#2b2109;
+  font-weight:bold;
+}
+
+button:hover{
+  background:#46350d;
+}
+
+.btn-main{
+  background:#5a3f07;
+  border-color:#ffd76a;
+}
+
+.grid4{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+@media(max-width:1000px){
+  .grid4{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:650px){
+  .grid4{grid-template-columns:1fr}
+}
+
+.card{
+  background:linear-gradient(180deg,#191408,#0c0a05);
+  border:1px solid #7a5d1c;
+  border-radius:14px;
+  padding:12px;
+  min-height:150px;
+}
+
+.card h2{
+  margin:0 0 8px;
+  color:var(--gold3);
+  font-size:17px;
+}
+
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.open{color:var(--orange);font-weight:bold}
+.gold{color:var(--gold);font-weight:bold}
+.small{color:var(--muted);font-size:13px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+th,td{
+  border-bottom:1px solid #4b3915;
+  padding:8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:var(--gold3);
+  background:#0c0a05;
+  position:sticky;
+  top:0;
+}
+
+.scroll{
+  max-height:390px;
+  overflow:auto;
+  border:1px solid #4b3915;
+  border-radius:12px;
+}
+
+pre{
+  background:#070604;
+  border:1px solid #4b3915;
+  border-radius:12px;
+  padding:12px;
+  overflow:auto;
+  max-height:420px;
+  font-size:12px;
+  color:#fff8df;
+}
+
+.badge{
+  display:inline-block;
+  border:1px solid #8d6f25;
+  border-radius:999px;
+  padding:4px 8px;
+  margin:2px;
+  font-size:12px;
+}
+
+.topline{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.big{
+  font-size:28px;
+  font-weight:bold;
+}
+
+/* upgrade notice boxes */
+.upgrade{
+  background:#1a1405;
+  border:1px solid #6d5520;
+  border-radius:10px;
+  padding:8px 10px;
+  margin-top:8px;
+  font-size:12px;
+  color:#c9a460;
+}
+
+.upgrade b{ color:var(--gold3); }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Gold Output — Four Conjecture Scanner</h1>
+<div class="sub">
+  Collatz testing removed. Engine shell: scan → certificate rows → open leaves → claim gate → SHA-256 hash → export packet.
+  Includes: li(x) Riemann upgrade · BSD discriminant + j-invariant · Goldbach survivor gaps · Twin Prime density · P vs NP formal model.
+</div>
+
+<div class="panel">
+  <div class="controls">
+    <label>N:</label>
+    <input id="N" type="number" value="10000" min="100" max="250000" />
+
+    <label>BSD a:</label>
+    <input id="curveA" type="number" value="-1" />
+
+    <label>BSD b:</label>
+    <input id="curveB" type="number" value="1" />
+
+    <button class="btn-main" onclick="runGoldOutput()">Run Gold Output</button>
+    <button onclick="exportPacket()">Export JSON</button>
+    <button onclick="copyGoldSummary()">Copy Gold Summary</button>
+  </div>
+</div>
+
+<div class="grid4" id="cards"></div>
+
+<div class="panel">
+  <h2>Gold Pass / Fail List</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Status</th>
+          <th>Checked</th>
+          <th>Gold Output</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SURVIVOR GAPS TABLE (Goldbach upgrade) -->
+<div class="panel">
+  <h2>Goldbach Survivor Gaps <span class="badge">Upgrade: Step 1</span></h2>
+  <div class="small" style="margin-bottom:8px;">
+    For each even E, a survivor gap is an offset g where both E/2 − g and E/2 + g are prime.
+    The survivor count is the number of valid g found. If any E has 0 survivors that is an obstruction.
+  </div>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Even E</th>
+          <th>Survivors</th>
+          <th>Sample witness</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="survivorBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Certificate Rows</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th>
+          <th>Input</th>
+          <th>Certificate</th>
+          <th>Witness</th>
+          <th>Hash</th>
+        </tr>
+      </thead>
+      <tbody id="certBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Open Leaves</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Engine</th>
+          <th>Input</th>
+          <th>Gap</th>
+          <th>Next Action</th>
+        </tr>
+      </thead>
+      <tbody id="openBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Raw Gold Packet</h2>
+  <pre id="rawOut">Run Gold Output...</pre>
+</div>
+
+</div>
+
+<script>
+let LAST_PACKET = null;
+
+/* ---------------- shared engine shell ---------------- */
+
+function makePacket(N, a, b){
+  return {
+    title:"Gold Output Four Conjecture Packet",
+    created:new Date().toISOString(),
+    warning:"Collatz testing removed. These are finite/scanner/toy outputs, not proofs.",
+    N,
+    curve:{a,b},
+    engines:[
+      "Goldbach Engine (+ Survivor Gap upgrade)",
+      "Twin Prime Engine (+ density note)",
+      "Riemann Surface Engine (upgraded to li(x))",
+      "P vs NP Toy Engine (+ formal model statement)",
+      "BSD Toy Curve Engine (+ discriminant + j-invariant)",
+      "Certificate Row Engine",
+      "Open Leaf Engine",
+      "Claim Gate Engine",
+      "SHA-256 Hash Engine",
+      "Gold Output Export Engine"
+    ],
+    results:[],
+    certificates:[],
+    openLeaves:[],
+    survivorTable:[],
+    claimGate:{
+      safe:"No surface failure found inside the tested range. This is computational evidence, not proof.",
+      blocked:"Do not say solved, proven, accepted, or universal from this scan."
+    }
+  };
+}
+
+function addCert(packet, engine, input, certificate, witness){
+  const row = {engine, input, certificate, witness, hash:"pending"};
+  packet.certificates.push(row);
+  return row;
+}
+
+function addOpen(packet, engine, input, gap, nextAction){
+  packet.openLeaves.push({engine,input,gap,nextAction});
+}
+
+function esc(x){
+  return String(x)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function cls(s){
+  if(s === "PASS") return "pass";
+  if(s === "FAIL") return "fail";
+  if(s === "OPEN") return "open";
+  return "gold";
+}
+
+/* ---------------- math helpers ---------------- */
+
+function isPrime(n){
+  if(n < 2) return false;
+  if(n === 2 || n === 3) return true;
+  if(n % 2 === 0 || n % 3 === 0) return false;
+  for(let i=5;i*i<=n;i+=6){
+    if(n%i===0 || n%(i+2)===0) return false;
+  }
+  return true;
+}
+
+function primesUpTo(N){
+  const sieve = new Uint8Array(N + 1);
+  const primes = [];
+  for(let i=2;i<=N;i++) sieve[i]=1;
+  for(let p=2;p*p<=N;p++){
+    if(sieve[p]){
+      for(let q=p*p;q<=N;q+=p) sieve[q]=0;
+    }
+  }
+  for(let i=2;i<=N;i++){
+    if(sieve[i]) primes.push(i);
+  }
+  return {sieve, primes};
+}
+
+function isSquare(n){
+  if(n < 0) return false;
+  const r = Math.floor(Math.sqrt(n));
+  return r*r === n;
+}
+
+/* li(x) = ∫₂ˣ dt/ln(t), approximated by series expansion around x */
+function li(x){
+  if(x <= 1) return 0;
+  // Use numerical integration (simple trapezoid) for accuracy
+  const steps = Math.min(2000, Math.floor(x));
+  const h = (x - 2) / steps;
+  if(h <= 0) return 0;
+  let sum = 0;
+  for(let i = 0; i <= steps; i++){
+    const t = 2 + i * h;
+    const w = (i === 0 || i === steps) ? 0.5 : 1;
+    sum += w / Math.log(t);
+  }
+  return sum * h;
+}
+
+async function sha256(text){
+  const enc = new TextEncoder();
+  const data = enc.encode(text);
+  const buffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+/* ---------------- 1 Goldbach + Survivor Gaps ---------------- */
+
+function engineGoldbach(packet, N, primeData){
+  let firstFail = null;
+  let checked = 0;
+  let lastWitness = null;
+  const survivorRows = [];
+
+  // Sample even numbers to show in survivor table (show every step)
+  const survivorStep = Math.max(2, Math.floor(N / 40)) * 2; // keep even
+  const survivorSet = new Set();
+  for(let e = 4; e <= N; e += survivorStep) survivorSet.add(e);
+  survivorSet.add(N % 2 === 0 ? N : N - 1);
+
+  for(let E=4; E<=N; E+=2){
+    checked++;
+    let hit = null;
+
+    for(let p=2; p<=E/2; p++){
+      if(primeData.sieve[p] && primeData.sieve[E-p]){
+        hit = [p, E-p];
+        break;
+      }
+    }
+
+    if(!hit){
+      firstFail = E;
+      addOpen(
+        packet,
+        "Goldbach Engine",
+        E,
+        "No prime pair found.",
+        "Audit prime checker. If valid, this is an obstruction row."
+      );
+      break;
+    }
+
+    lastWitness = {E, p:hit[0], q:hit[1]};
+
+    // Survivor gap count for this E
+    if(survivorSet.has(E)){
+      const center = E / 2;
+      let survivors = 0;
+      let sampleWitness = null;
+      for(let g = 0; g <= center - 2; g++){
+        const lo = center - g;
+        const hi = center + g;
+        if(lo >= 2 && hi <= N && primeData.sieve[lo] && primeData.sieve[hi]){
+          survivors++;
+          if(!sampleWitness) sampleWitness = [lo, hi];
+        }
+      }
+      survivorRows.push({E, survivors, sampleWitness});
+    }
+
+    if(E <= 50 || E === N || E % Math.max(1000, Math.floor(N/10)) === 0){
+      addCert(
+        packet,
+        "Goldbach Engine",
+        E,
+        "E = p + q and both p,q are prime.",
+        `${E} = ${hit[0]} + ${hit[1]}`
+      );
+    }
+  }
+
+  packet.survivorTable = survivorRows;
+
+  packet.results.push({
+    test:"Goldbach",
+    status:firstFail ? "FAIL" : "PASS",
+    checked:`Even E from 4 to ${N}`,
+    output:firstFail
+      ? `First obstruction at E=${firstFail}.`
+      : `GOLD: no surface failure up to ${N}. Last witness ${lastWitness.E} = ${lastWitness.p} + ${lastWitness.q}. Survivor gap counts computed for ${survivorRows.length} sample values.`
+  });
+}
+
+/* ---------------- 2 Twin Prime + density note ---------------- */
+
+function engineTwinPrime(packet, N, primeData){
+  let count = 0;
+  let last = null;
+  let biggestGap = 0;
+  let prevStart = null;
+  let gapHistory = [];
+
+  for(let p=2; p<=N-2; p++){
+    if(primeData.sieve[p] && primeData.sieve[p+2]){
+      count++;
+      last = [p,p+2];
+
+      if(prevStart !== null){
+        const g = p - prevStart;
+        if(g > biggestGap){
+          biggestGap = g;
+          gapHistory.push({at:p, gap:g});
+        }
+      }
+      prevStart = p;
+
+      if(p <= 50 || p > N-100 || p % Math.max(1000, Math.floor(N/10)) === 0){
+        addCert(
+          packet,
+          "Twin Prime Engine",
+          p,
+          "p and p+2 are both prime.",
+          `${p}, ${p+2}`
+        );
+      }
+    }
+  }
+
+  if(count === 0){
+    addOpen(
+      packet,
+      "Twin Prime Engine",
+      `[2, ${N}]`,
+      "No twin-prime pair found.",
+      "Check prime engine or increase N."
+    );
+  }
+
+  // Density note: Brun's constant — sum of 1/p + 1/(p+2) converges
+  // This is surface observation, not proof of infinity
+  const brunApprox = count > 0
+    ? `Approx Brun partial sum ≈ ${packet.certificates
+        .filter(c => c.engine === "Twin Prime Engine")
+        .slice(0,20)
+        .reduce((acc, c) => {
+          const p = Number(c.input);
+          return acc + (p > 1 ? 1/p + 1/(p+2) : 0);
+        }, 0).toFixed(6)} (first ${Math.min(20,count)} pairs only, toy estimate)`
+    : "N/A";
+
+  addOpen(
+    packet,
+    "Twin Prime Engine",
+    "infinity",
+    `Finding ${count} pairs does not prove infinitely many exist. Brun's theorem shows the sum 1/p + 1/(p+2) converges even if infinite pairs exist. The GPY/Maynard results prove bounded gaps but not gap=2 specifically.`,
+    "Cite GPY (2005) and Maynard (2013). State what remains unproven."
+  );
+
+  packet.results.push({
+    test:"Twin Prime",
+    status:count ? "PASS" : "FAIL",
+    checked:`Prime pairs p,p+2 up to ${N}`,
+    output:count
+      ? `GOLD: ${count} twin-prime pairs. Last pair ${last[0]}, ${last[1]}. Biggest observed start-gap ${biggestGap}. ${brunApprox}.`
+      : `No twin-prime pairs found.`
+  });
+}
+
+/* ---------------- 3 Riemann — upgraded to li(x) ---------------- */
+
+function engineRiemannSurface(packet, N, primeData){
+  let pi = 0;
+  let worst = null;
+  const step = Math.max(100, Math.floor(N/20));
+  let next = step;
+  let openHit = false;
+
+  for(let x=2; x<=N; x++){
+    if(primeData.sieve[x]) pi++;
+
+    if(x >= next || x === N){
+      const liX = li(x);                          // UPGRADE: li(x) instead of x/log(x)
+      const naive = x / Math.log(x);
+      const errorLi = Math.abs(pi - liX);
+      const errorNaive = Math.abs(pi - naive);
+      // RH would imply error vs li(x) is O(sqrt(x)*log(x))
+      const fence = Math.sqrt(x) * Math.log(x);
+      const ratio = errorLi / fence;
+
+      const row = {x, pi, liX, naive, errorLi, errorNaive, fence, ratio};
+      if(!worst || ratio > worst.ratio) worst = row;
+
+      addCert(
+        packet,
+        "Riemann Surface Engine",
+        x,
+        "π(x) compared against li(x) with RH-implied error fence.",
+        `π(${x})=${pi}, li(x)=${liX.toFixed(3)}, error=${errorLi.toFixed(3)}, fence=${fence.toFixed(3)}`
+      );
+
+      if(ratio > 1){
+        openHit = true;
+        addOpen(
+          packet,
+          "Riemann Surface Engine",
+          x,
+          "π(x) error vs li(x) exceeded the soft fence sqrt(x)·log(x).",
+          "This is not RH failure. The RH-implied bound is O(sqrt(x)·log(x)) — investigate explicit error term literature."
+        );
+      }
+
+      next += step;
+    }
+  }
+
+  // Gap statement: scanning cannot close RH
+  addOpen(
+    packet,
+    "Riemann Surface Engine",
+    "infinite case",
+    "Scanning verifies a finite prefix only. RH requires proof that no zero anywhere in the infinite critical strip has Re(s) ≠ 1/2.",
+    "Use Odlyzko's verified zero tables for a finite certificate range. State the infinite-case gap honestly."
+  );
+
+  packet.results.push({
+    test:"Riemann Surface (li(x) upgrade)",
+    status:openHit ? "OPEN" : "PASS",
+    checked:`π(x) vs li(x) checkpoints up to ${N}`,
+    output:worst
+      ? `GOLD: worst ratio ${worst.ratio.toFixed(4)} at x=${worst.x}; π=${worst.pi}; li(x)=${worst.liX.toFixed(3)}; error=${worst.errorLi.toFixed(3)}; fence=${worst.fence.toFixed(3)}.`
+      : "No checkpoints."
+  });
+}
+
+/* ---------------- 4 P vs NP toy + formal model ---------------- */
+
+function enginePvsNP(packet, N){
+  const size = Math.min(24, Math.max(12, Math.floor(Math.log2(N)) + 8));
+  const nums = [];
+
+  for(let i=0;i<size;i++){
+    nums.push(((i * 37 + 19) % 97) + 1);
+  }
+
+  const target = nums.slice(0, Math.floor(size/2)).reduce((a,b)=>a+b,0);
+  const maxMask = 1 << size;
+
+  let found = null;
+  let checked = 0;
+  const start = performance.now();
+
+  for(let mask=0; mask<maxMask; mask++){
+    checked++;
+    let sum = 0;
+    for(let j=0;j<size;j++){
+      if(mask & (1 << j)) sum += nums[j];
+    }
+    if(sum === target){
+      found = mask;
+      break;
+    }
+  }
+
+  const ms = performance.now() - start;
+
+  // Verify in O(size)
+  let verifySum = 0;
+  if(found !== null){
+    const verifyStart = performance.now();
+    for(let j=0;j<size;j++){
+      if(found & (1 << j)) verifySum += nums[j];
+    }
+    const verifyMs = performance.now() - verifyStart;
+
+    addCert(
+      packet,
+      "P vs NP Toy Engine",
+      `items=${size}`,
+      "Subset witness found and verified in O(n) — demonstrates find/check gap.",
+      `target=${target}, mask=${found}, checked=${checked}, bruteMs=${ms.toFixed(3)}, verifyMs=${verifyMs.toFixed(6)}`
+    );
+  }else{
+    addOpen(
+      packet,
+      "P vs NP Toy Engine",
+      `items=${size}`,
+      "No subset found.",
+      "Check generated target or increase toy depth."
+    );
+  }
+
+  // Formal model gap statement
+  addOpen(
+    packet,
+    "P vs NP Toy Engine",
+    "formal model",
+    `This app operates on fixed-size browser instances (n=${size}), not Turing machines with polynomial time bounds. P vs NP is about complexity classes over all input sizes. The natural proofs barrier (Razborov-Rudich 1994) and relativization barrier mean most naive approaches cannot separate P from NP.`,
+    "State clearly: this is a fixed-size find/check demo, not a complexity class result."
+  );
+
+  packet.results.push({
+    test:"P vs NP Toy",
+    status:found !== null ? "PASS" : "FAIL",
+    checked:`Subset-sum toy instance with ${size} items. Formal model: browser fixed-size, not Turing machine.`,
+    output:found !== null
+      ? `GOLD: witness found after ${checked} masks in ${ms.toFixed(3)} ms. Verify confirmed in O(${size}). Toy only — not a complexity result.`
+      : `No witness found.`
+  });
+}
+
+/* ---------------- 5 BSD toy + discriminant + j-invariant ---------------- */
+
+function engineBSD(packet, N, a, b){
+  const X = Math.min(1000, Math.max(50, Math.floor(N/10)));
+
+  // Weierstrass discriminant: Δ = -16(4a³ + 27b²)
+  const discCore = 4*a*a*a + 27*b*b;
+  const delta = -16 * discCore;
+  const singular = discCore === 0;
+
+  // j-invariant: j = -1728 * (4a)³ / Δ  (when Δ ≠ 0)
+  let jInvariant = null;
+  if(!singular){
+    jInvariant = (-1728 * Math.pow(4*a, 3)) / delta;
+  }
+
+  const curveInfo = `y² = x³ + (${a})x + (${b}), Δ=${delta.toFixed(0)}, j=${jInvariant !== null ? jInvariant.toFixed(4) : "undefined (singular)"}`;
+
+  if(singular){
+    addOpen(
+      packet,
+      "BSD Toy Curve Engine",
+      `a=${a}, b=${b}`,
+      `Singular curve. Δ = -16(4a³ + 27b²) = ${delta}. BSD elliptic curve setup does not apply.`,
+      "Choose a,b with 4a³ + 27b² ≠ 0."
+    );
+
+    packet.results.push({
+      test:"BSD Toy Curve",
+      status:"FAIL",
+      checked:curveInfo,
+      output:`Curve is singular (Δ=0). BSD elliptic curve setup does not apply.`
+    });
+
+    return;
+  }
+
+  const points = [];
+
+  for(let x=-X; x<=X; x++){
+    const rhs = x*x*x + a*x + b;
+    if(rhs >= 0 && isSquare(rhs)){
+      const y = Math.floor(Math.sqrt(rhs));
+      points.push([x,y]);
+      addCert(
+        packet,
+        "BSD Toy Curve Engine",
+        `x=${x}`,
+        "Integer point found on curve.",
+        `(${x}, ${y}) satisfies ${curveInfo}`
+      );
+
+      if(y !== 0){
+        points.push([x,-y]);
+        addCert(
+          packet,
+          "BSD Toy Curve Engine",
+          `x=${x}`,
+          "Mirror integer point found on curve.",
+          `(${x}, ${-y}) satisfies ${curveInfo}`
+        );
+      }
+    }
+  }
+
+  if(points.length === 0){
+    addOpen(
+      packet,
+      "BSD Toy Curve Engine",
+      `x from ${-X} to ${X}`,
+      "No integer point found in bounded window.",
+      "Increase X or test another curve."
+    );
+  }
+
+  // Gap statement: integer points ≠ rational points, and bounded ≠ all of Q
+  addOpen(
+    packet,
+    "BSD Toy Curve Engine",
+    "rational vs integer gap",
+    `Integer points in [${-X},${X}] ≠ rational points over Q. BSD concerns the rank of E(Q) and the order of vanishing of L(E,s) at s=1. This scanner cannot address either. Geometric rank requires computing E(Q) over rationals, not just integers.`,
+    "Look up this curve in the Cremona database. Compare analytic rank (from L-function) to geometric rank."
+  );
+
+  packet.results.push({
+    test:"BSD Toy Curve",
+    status:points.length ? "PASS" : "OPEN",
+    checked:curveInfo,
+    output:points.length
+      ? `GOLD: ${points.length} integer point hits in x ∈ [${-X},${X}]. Sample: ${JSON.stringify(points.slice(0,4))}. Δ=${delta.toFixed(0)}, j=${jInvariant.toFixed(4)}.`
+      : `No integer points in this window. Δ=${delta.toFixed(0)}, j=${jInvariant.toFixed(4)}.`
+  });
+}
+
+/* ---------------- hash certificates ---------------- */
+
+async function hashCertificates(packet){
+  for(const c of packet.certificates){
+    c.hash = await sha256(`${c.engine}|${c.input}|${c.certificate}|${c.witness}`);
+  }
+}
+
+/* ---------------- run/render ---------------- */
+
+async function runGoldOutput(){
+  const N = Number(document.getElementById("N").value || 10000);
+  const a = Number(document.getElementById("curveA").value || -1);
+  const b = Number(document.getElementById("curveB").value || 1);
+
+  const packet = makePacket(N,a,b);
+  const primeData = primesUpTo(Math.max(N,100));
+
+  try{ engineGoldbach(packet,N,primeData); }
+  catch(e){ crash(packet,"Goldbach Engine",e); }
+
+  try{ engineTwinPrime(packet,N,primeData); }
+  catch(e){ crash(packet,"Twin Prime Engine",e); }
+
+  try{ engineRiemannSurface(packet,N,primeData); }
+  catch(e){ crash(packet,"Riemann Surface Engine",e); }
+
+  try{ enginePvsNP(packet,N); }
+  catch(e){ crash(packet,"P vs NP Toy Engine",e); }
+
+  try{ engineBSD(packet,N,a,b); }
+  catch(e){ crash(packet,"BSD Toy Curve Engine",e); }
+
+  await hashCertificates(packet);
+
+  LAST_PACKET = packet;
+  render(packet);
+}
+
+function crash(packet, engine, e){
+  packet.results.push({
+    test:engine,
+    status:"FAIL",
+    checked:"engine crash",
+    output:String(e && e.message ? e.message : e)
+  });
+
+  addOpen(
+    packet,
+    engine,
+    "engine",
+    String(e && e.message ? e.message : e),
+    "Fix engine crash."
+  );
+}
+
+function render(packet){
+  renderCards(packet);
+  renderResults(packet);
+  renderSurvivors(packet);
+  renderCerts(packet);
+  renderOpen(packet);
+  document.getElementById("rawOut").textContent = JSON.stringify(packet,null,2);
+}
+
+function renderCards(packet){
+  const cards = document.getElementById("cards");
+  const pass = packet.results.filter(r=>r.status==="PASS").length;
+  const open = packet.results.filter(r=>r.status==="OPEN").length;
+  const fail = packet.results.filter(r=>r.status==="FAIL").length;
+
+  const data = [
+    {title:"Tests Run",  value:packet.results.length, note:"Collatz removed",       cls:"gold"},
+    {title:"PASS",       value:pass,                  note:"surface pass",           cls:"pass"},
+    {title:"OPEN",       value:open,                  note:"needs stronger math",    cls:"open"},
+    {title:"FAIL",       value:fail,                  note:"engine or obstruction",  cls:"fail"}
+  ];
+
+  cards.innerHTML = data.map(d => `
+    <div class="card">
+      <h2>${esc(d.title)}</h2>
+      <div class="big ${d.cls}">${d.value}</div>
+      <div class="small">${esc(d.note)}</div>
+    </div>
+  `).join("");
+}
+
+function renderResults(packet){
+  const body = document.getElementById("resultBody");
+  body.innerHTML = "";
+  for(const r of packet.results){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${esc(r.test)}</td>
+      <td><span class="${cls(r.status)}">${esc(r.status)}</span></td>
+      <td>${esc(r.checked)}</td>
+      <td>${esc(r.output)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function renderSurvivors(packet){
+  const body = document.getElementById("survivorBody");
+  body.innerHTML = "";
+  if(!packet.survivorTable || packet.survivorTable.length === 0){
+    body.innerHTML = `<tr><td colspan="4" class="small">No survivor data.</td></tr>`;
+    return;
+  }
+  for(const s of packet.survivorTable){
+    const tr = document.createElement("tr");
+    const witness = s.sampleWitness
+      ? `${s.sampleWitness[0]} + ${s.sampleWitness[1]} = ${s.E}`
+      : "none";
+    tr.innerHTML = `
+      <td>${esc(s.E)}</td>
+      <td><span class="${s.survivors > 0 ? "pass" : "fail"}">${s.survivors}</span></td>
+      <td>${esc(witness)}</td>
+      <td><span class="${s.survivors > 0 ? "pass" : "fail"}">${s.survivors > 0 ? "PASS" : "OBSTRUCTION"}</span></td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function renderCerts(packet){
+  const body = document.getElementById("certBody");
+  body.innerHTML = "";
+  for(const c of packet.certificates){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${esc(c.engine)}</td>
+      <td>${esc(c.input)}</td>
+      <td>${esc(c.certificate)}</td>
+      <td>${esc(c.witness)}</td>
+      <td><code>${esc(c.hash.slice(0,24))}...</code></td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function renderOpen(packet){
+  const body = document.getElementById("openBody");
+  body.innerHTML = "";
+  for(const o of packet.openLeaves){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${esc(o.engine)}</td>
+      <td>${esc(o.input)}</td>
+      <td>${esc(o.gap)}</td>
+      <td>${esc(o.nextAction)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function exportPacket(){
+  if(!LAST_PACKET){
+    alert("Run Gold Output first.");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(LAST_PACKET,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gold_output_packet.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyGoldSummary(){
+  if(!LAST_PACKET){
+    alert("Run Gold Output first.");
+    return;
+  }
+
+  const lines = [];
+  lines.push("GOLD OUTPUT SUMMARY");
+  lines.push("");
+  lines.push("Collatz testing removed.");
+  lines.push("Upgrades applied:");
+  lines.push("  - Goldbach: survivor gap counts per even E");
+  lines.push("  - Twin Prime: Brun partial sum + GPY/Maynard gap statement");
+  lines.push("  - Riemann: upgraded from x/log(x) to li(x)");
+  lines.push("  - P vs NP: formal model + Razborov-Rudich barrier note");
+  lines.push("  - BSD: discriminant Δ, j-invariant, integer vs rational gap statement");
+  lines.push("");
+
+  for(const r of LAST_PACKET.results){
+    lines.push(`${r.test}: ${r.status} — ${r.output}`);
+  }
+
+  lines.push("");
+  lines.push("Safe claim:");
+  lines.push(LAST_PACKET.claimGate.safe);
+  lines.push("");
+  lines.push("Blocked claim:");
+  lines.push(LAST_PACKET.claimGate.blocked);
+
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>{
+    alert("Gold summary copied.");
+  });
+}
+
+runGoldOutput();
+</script>
+
+</body>
+</html>

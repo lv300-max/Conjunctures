@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Claim Gate Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --bg:#02060b;
+  --panel:#071522;
+  --line:#16425c;
+  --text:#e8f8ff;
+  --muted:#9bb5c7;
+  --cyan:#7ee7ff;
+  --green:#7dff9b;
+  --yellow:#ffd86b;
+  --red:#ff7373;
+  --orange:#ffae5d;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top left, rgba(0,220,255,.14), transparent 32%),
+    linear-gradient(180deg,#02060b,#050b12,#010409);
+  color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.wrap{
+  max-width:1050px;
+  margin:auto;
+  padding:14px;
+}
+
+h1{
+  color:var(--cyan);
+  margin:8px 0 4px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:12px;
+}
+
+.panel{
+  background:rgba(7,21,34,.94);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 0 22px rgba(0,200,255,.08);
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+select, button{
+  border:1px solid #1f6f94;
+  background:#020812;
+  color:var(--text);
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+button{
+  cursor:pointer;
+  background:#07344c;
+  font-weight:bold;
+}
+
+button:hover{
+  background:#0b5174;
+}
+
+.btn-main{
+  background:#075f7b;
+  border-color:#45dfff;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+}
+
+.card{
+  background:#06131f;
+  border:1px solid #12384f;
+  border-radius:14px;
+  padding:12px;
+}
+
+.good{color:var(--green);font-weight:bold}
+.warn{color:var(--yellow);font-weight:bold}
+.bad{color:var(--red);font-weight:bold}
+.mid{color:var(--orange);font-weight:bold}
+.cyan{color:var(--cyan);font-weight:bold}
+.small{color:var(--muted);font-size:13px}
+
+pre{
+  background:#020812;
+  border:1px solid #12384f;
+  border-radius:12px;
+  padding:12px;
+  overflow:auto;
+  white-space:pre-wrap;
+  font-size:13px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+td,th{
+  border-bottom:1px solid #12384f;
+  padding:8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:#9be9ff;
+}
+
+.steps-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:4px;
+}
+
+@media(max-width:760px){
+  .steps-grid{grid-template-columns:1fr}
+}
+
+.step-card{
+  background:#050f1a;
+  border:1px solid #143650;
+  border-radius:12px;
+  padding:12px;
+}
+
+.step-num{
+  font-size:22px;
+  font-weight:bold;
+  color:var(--cyan);
+  margin-bottom:4px;
+}
+
+.step-title{
+  font-weight:bold;
+  color:#bdf3ff;
+  margin-bottom:6px;
+  font-size:14px;
+}
+
+.step-body{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.5;
+}
+
+.step-gate{
+  margin-top:8px;
+  font-size:12px;
+  color:var(--yellow);
+}
+
+.all-steps-title{
+  color:var(--cyan);
+  font-size:17px;
+  font-weight:bold;
+  margin:0 0 10px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Claim Gate Engine</h1>
+<div class="sub">
+  This page tells you what your app is allowed to claim without overstating the math.
+</div>
+
+<div class="panel">
+  <div class="controls">
+    <label>Project:</label>
+    <select id="project" onchange="runGate()">
+      <option value="collatz">Collatz</option>
+      <option value="goldbach">Goldbach</option>
+      <option value="twin">Twin Prime</option>
+      <option value="riemann">Riemann</option>
+      <option value="pnp">P vs NP</option>
+      <option value="bsd">BSD</option>
+    </select>
+
+    <label>Highest evidence level:</label>
+    <select id="level" onchange="runGate()">
+      <option value="0">0 — Toy</option>
+      <option value="1">1 — Surface scan</option>
+      <option value="2">2 — Stress scan</option>
+      <option value="3">3 — Certificate per case</option>
+      <option value="4">4 — Universal lemma written</option>
+      <option value="5">5 — Full proof candidate</option>
+    </select>
+
+    <button class="btn-main" onclick="runGate()">Run Claim Gate</button>
+    <button onclick="copySafe()">Copy Safe Claim</button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Allowed Claim</h2>
+    <pre id="allowed">Run gate...</pre>
+  </div>
+
+  <div class="card">
+    <h2>Blocked Claim</h2>
+    <pre id="blocked">Run gate...</pre>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Reviewer-Safe Output</h2>
+  <pre id="reviewer">Run gate...</pre>
+</div>
+
+<!-- NEXT 3 STEPS PANEL -->
+<div class="panel">
+  <div class="all-steps-title">Next 3 Steps Toward Full Proof</div>
+  <div class="small" style="margin-bottom:10px;">
+    These are the concrete moves that would raise your current evidence level for the selected project.
+  </div>
+  <div class="steps-grid" id="stepsGrid"></div>
+</div>
+
+<div class="panel">
+  <h2>Proof Level Meaning</h2>
+  <table>
+    <tr><th>Level</th><th>Name</th><th>Meaning</th></tr>
+    <tr><td>0</td><td>Toy</td><td>Demo only. No proof claim.</td></tr>
+    <tr><td>1</td><td>Surface scan</td><td>Checked a range. Useful, but not proof.</td></tr>
+    <tr><td>2</td><td>Stress scan</td><td>Checked a large range. Still not proof.</td></tr>
+    <tr><td>3</td><td>Certificate per case</td><td>Each checked case has a witness row.</td></tr>
+    <tr><td>4</td><td>Universal lemma written</td><td>You wrote the rule that should cover all cases.</td></tr>
+    <tr><td>5</td><td>Full proof candidate</td><td>All cases covered, no missing gap, ready for review.</td></tr>
+  </table>
+</div>
+
+</div>
+
+<script>
+let LAST_SAFE = "";
+
+const PROJECTS = {
+  collatz: {
+    name: "Collatz",
+    theorem: "Every positive integer eventually reaches 1 under the Collatz map.",
+    missing: "must rule out both infinite growth and non-1 cycles.",
+    steps: [
+      {
+        title: "Prove the descent certificate covers all residue classes",
+        body: "Your affine formula T^m(n) = (3^o·n + b) / 2^c and gap = 2^c − 3^o > 0 gives descent for n > B. Write the lemma that every odd n belongs to exactly one residue class in your partition, and that class has gap > 0. This closes the main missing piece.",
+        gate: "Raises level: 3 → 4"
+      },
+      {
+        title: "Remove or fully prove the quotient abstraction",
+        body: "The quotient shortcut either preserves full proof-critical state or it does not. Run the Quotient Audit Engine and either (a) prove the quotient map is injective on residue classes, or (b) remove it and keep only the exact-state engine. Leaving it open is a gap a reviewer will flag.",
+        gate: "Raises level: 4 → 4+ (closes open leaf)"
+      },
+      {
+        title: "Write the finitely-bounded small-case base",
+        body: "The descent lemma handles n > B. For each residue class, B is a computable number. Explicitly verify every n ≤ max(B) by direct path computation and store those as certificate rows. This covers the base case so induction can start.",
+        gate: "Raises level: 4 → 5 (proof candidate)"
+      }
+    ]
+  },
+  goldbach: {
+    name: "Goldbach",
+    theorem: "Every even number greater than 2 is the sum of two primes.",
+    missing: "must prove every even number has at least one prime-pair witness.",
+    steps: [
+      {
+        title: "Define and compute survivors for each even number",
+        body: "For even E, a survivor gap is an offset g such that E/2 − g and E/2 + g are both not killed by small prime sieves. Build the Survivor Engine to count how many gaps survive for each E up to N. If survivors > 0 for all E, that is the certificate basis.",
+        gate: "Raises level: 1 → 3"
+      },
+      {
+        title: "Prove the Side-Cover theorem: large primes cannot block all survivors",
+        body: "The key question is: can a large prime p cover every surviving gap simultaneously for some even E? Write a density argument showing the number of gaps killed by p grows slower than the number of new survivors created by the sieve. This is the Wall-Break target.",
+        gate: "Raises level: 3 → 4"
+      },
+      {
+        title: "Build a SHA-256 certificate hash for every verified witness",
+        body: "For every even E in a stress-tested range, store the witness (p, q) with a hash. This makes the certificate auditable and creates the machine-readable proof packet a reviewer can independently verify.",
+        gate: "Raises level: 4 → 5 (proof candidate)"
+      }
+    ]
+  },
+  twin: {
+    name: "Twin Prime",
+    theorem: "There are infinitely many prime pairs p and p+2.",
+    missing: "must prove the pairs never stop forever.",
+    steps: [
+      {
+        title: "Measure the largest observed gap between consecutive twin-prime starts",
+        body: "Run the Twin Prime Engine up to a large N (e.g. 1,000,000). Record the maximum observed gap between consecutive twin-prime starts. This becomes your surface evidence that gaps are bounded in practice, even if you cannot yet prove it universally.",
+        gate: "Raises level: 1 → 2"
+      },
+      {
+        title: "Write a sieve-density argument for twin survivors",
+        body: "Use the same Survivor Engine idea as Goldbach. For each p, count how many integers n ≤ p survive the small-prime sieve as twin-prime candidates. Write the density formula showing this count grows, not shrinks. This is the analogue of the Brun sieve improvement.",
+        gate: "Raises level: 2 → 4"
+      },
+      {
+        title: "Identify and cite the precise gap in current best tools (GPY / Maynard)",
+        body: "The Green-Tao, Goldston-Pintz-Yildirim, and Maynard results get arbitrarily small prime gaps but not gap = 2 specifically. Write a one-page gap analysis: what exactly remains unproven and what your engine contributes or cannot contribute. A reviewer needs to see you know where the real wall is.",
+        gate: "Raises level: 4 → 5 (proof candidate ready for specialist)"
+      }
+    ]
+  },
+  riemann: {
+    name: "Riemann Hypothesis",
+    theorem: "All nontrivial zeros of the zeta function have real part 1/2.",
+    missing: "must prove every nontrivial zero lies on the critical line.",
+    steps: [
+      {
+        title: "Upgrade the prime-counting fence from x/log(x) to li(x)",
+        body: "Replace the naive π(x) ≈ x/log(x) model with the logarithmic integral li(x). The error |π(x) − li(x)| is what RH actually constrains (to O(√x · log x)). Implementing li(x) turns your Toy engine into a real RH surface scanner at level 2.",
+        gate: "Raises level: 0 → 2"
+      },
+      {
+        title: "Add an explicit zero-free region checker",
+        body: "Compute the first 1,000 nontrivial zeros of ζ(s) numerically (use a known verified list, e.g. from Odlyzko's tables). Verify each has real part exactly 0.5 in your engine and store them as certificate rows. This gives you level-3 evidence for a finite but large verified range.",
+        gate: "Raises level: 2 → 3"
+      },
+      {
+        title: "State the precise conjecture gap your app cannot close",
+        body: "RH cannot be closed by scanning. Write an honest gap statement: the claim requires a proof that no zero anywhere in the infinite critical strip has Re(s) ≠ 1/2. Your app verifies a finite prefix. A reviewer will need to see you understand the infinite-case gap and do not confuse scan with proof.",
+        gate: "Raises level: 3 → 4 (honest lemma stage)"
+      }
+    ]
+  },
+  pnp: {
+    name: "P vs NP",
+    theorem: "Asks whether every quickly checkable problem is also quickly solvable.",
+    missing: "must prove P = NP or P ≠ NP.",
+    steps: [
+      {
+        title: "Formalize the find/verify gap on a concrete NP-complete problem",
+        body: "Pick one NP-complete problem (3-SAT or subset sum). Write an exact machine description for both the brute-force solver and the polynomial-time verifier. Measure and chart the time ratio verify(n) / solve(n) as n grows. This is the clearest toy demonstration of the gap you are studying.",
+        gate: "Raises level: 0 → 1"
+      },
+      {
+        title: "Survey and cite the circuit complexity lower-bound barrier",
+        body: "The main known barrier to P ≠ NP proofs is the natural proofs barrier (Razborov-Rudich) and relativization. Write a one-page summary of what these barriers say your engine cannot do. Without this, any claimed proof will be immediately rejected by a reviewer who knows these barriers.",
+        gate: "Raises level: 1 → 3 (honest gap documentation)"
+      },
+      {
+        title: "Identify the exact formal model your app operates in",
+        body: "P vs NP is about Turing machines with polynomial time bounds. Your subset-sum toy runs in a browser with a fixed input size. Write the formal statement: 'This app demonstrates the find/check gap on instances up to size k. It does not address Turing machine complexity classes.' This separates toy from theorem.",
+        gate: "Raises level: 3 → 4 (honest lemma, prevents overclaiming)"
+      }
+    ]
+  },
+  bsd: {
+    name: "Birch and Swinnerton-Dyer",
+    theorem: "Connects rational points on elliptic curves to the L-function behavior at 1.",
+    missing: "must prove the exact rank/order relationship generally.",
+    steps: [
+      {
+        title: "Add a singularity guard and discriminant display to the curve scanner",
+        body: "The current BSD Toy Engine checks 4a³ + 27b² ≠ 0. Extend it to display the full Weierstrass discriminant Δ = −16(4a³ + 27b²), the j-invariant, and whether the curve is in minimal Weierstrass form. This turns a toy into a real elliptic curve data engine at level 2.",
+        gate: "Raises level: 0 → 2"
+      },
+      {
+        title: "Compute the L-function value at s=1 numerically for small curves",
+        body: "BSD says rank(E) = ord_{s=1} L(E,s). For small curves (e.g. y²=x³−x), look up or compute L(E,1) and L'(E,1) numerically using known tables (Cremona database). Check whether the analytic rank matches the geometric rank (number of independent rational points). Store this as a certificate row.",
+        gate: "Raises level: 2 → 3"
+      },
+      {
+        title: "State clearly which part of BSD your engine touches and which it cannot",
+        body: "BSD in full requires proving the rank/L-function correspondence for all elliptic curves over Q. Your engine finds integer points in a bounded window. Write the gap statement: integer points ≠ rational points (rational points are denser), and bounded window ≠ all of Q. A reviewer needs to see you know this distinction.",
+        gate: "Raises level: 3 → 4 (honest lemma stage)"
+      }
+    ]
+  }
+};
+
+function runGate(){
+  const key = document.getElementById("project").value;
+  const level = Number(document.getElementById("level").value);
+  const p = PROJECTS[key];
+
+  let allowed = "";
+  let blocked = "";
+  let reviewer = "";
+
+  if(level === 0){
+    allowed = `SAFE:\nThis is a toy model for exploring ${p.name}.\nIt demonstrates app behavior only.`;
+    blocked = `BLOCKED:\nDo not say this proves ${p.name}.\nDo not say it is strong evidence.`;
+  }
+
+  if(level === 1){
+    allowed = `SAFE:\nThe scanner found no surface failure in the tested range.\nThis supports the app engine, not the theorem.`;
+    blocked = `BLOCKED:\nDo not say the conjecture is solved.\nDo not say checked range = proof.`;
+  }
+
+  if(level === 2){
+    allowed = `SAFE:\nThe app passed a larger stress scan.\nThis is computational evidence inside a finite range.`;
+    blocked = `BLOCKED:\nDo not say forever.\nDo not say all numbers.\nDo not say universal.`;
+  }
+
+  if(level === 3){
+    allowed = `SAFE:\nEach checked case has a certificate witness.\nThe app can explain why each scanned case passed.`;
+    blocked = `BLOCKED:\nDo not say complete proof unless every possible case is covered by a universal rule.`;
+  }
+
+  if(level === 4){
+    allowed = `SAFE:\nThere is a proposed universal lemma.\nThe next task is to test whether the lemma covers every case with no hidden gap.`;
+    blocked = `BLOCKED:\nDo not say proof yet.\nA lemma draft is not accepted proof until it survives review.`;
+  }
+
+  if(level === 5){
+    allowed = `SAFE:\nThis may be called a proof candidate.\nIt should be sent for expert review with all definitions, lemmas, certificates, and audit files.`;
+    blocked = `BLOCKED:\nDo not say accepted proof.\nOnly say proof candidate until experts verify it.`;
+  }
+
+  reviewer =
+`PROJECT: ${p.name}
+
+THEOREM TARGET:
+${p.theorem}
+
+CURRENT LEVEL:
+${level} — ${levelName(level)}
+
+SAFE CLAIM:
+${allowed.replace("SAFE:\n","")}
+
+MAIN MISSING BURDEN:
+${p.missing}
+
+REVIEWER SENTENCE:
+I have built a workbench that reaches evidence level ${level} for ${p.name}. I am not claiming acceptance. I am asking you to check whether the current engine genuinely closes the remaining proof burden or whether there is a hidden gap.`;
+
+  LAST_SAFE = reviewer;
+
+  document.getElementById("allowed").textContent = allowed;
+  document.getElementById("blocked").textContent = blocked;
+  document.getElementById("reviewer").textContent = reviewer;
+
+  renderSteps(key);
+}
+
+function renderSteps(key){
+  const p = PROJECTS[key];
+  const grid = document.getElementById("stepsGrid");
+  grid.innerHTML = "";
+
+  p.steps.forEach((s, i) => {
+    const div = document.createElement("div");
+    div.className = "step-card";
+    div.innerHTML = `
+      <div class="step-num">${i + 1}</div>
+      <div class="step-title">${esc(s.title)}</div>
+      <div class="step-body">${esc(s.body)}</div>
+      <div class="step-gate">${esc(s.gate)}</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function levelName(n){
+  return [
+    "Toy",
+    "Surface scan",
+    "Stress scan",
+    "Certificate per case",
+    "Universal lemma written",
+    "Full proof candidate"
+  ][n] || "Unknown";
+}
+
+function copySafe(){
+  if(!LAST_SAFE){
+    runGate();
+  }
+
+  navigator.clipboard.writeText(LAST_SAFE).then(()=>{
+    alert("Reviewer-safe claim copied.");
+  });
+}
+
+function esc(x){
+  return String(x)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+runGate();
+</script>
+
+</body>
+</html>

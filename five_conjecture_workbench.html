@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ANY-N Five Conjecture Workbench</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --bg:#03070d;
+  --panel:#071522;
+  --panel2:#0a1d2d;
+  --line:#12384f;
+  --cyan:#7ee7ff;
+  --cyan2:#1fbce8;
+  --green:#7dff9b;
+  --red:#ff7070;
+  --yellow:#ffd86b;
+  --text:#dff7ff;
+  --muted:#8faabe;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top left, rgba(0,190,255,.12), transparent 30%),
+    linear-gradient(180deg,#02050a,#050b12 40%,#02050a);
+  color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.wrap{
+  max-width:1250px;
+  margin:auto;
+  padding:14px;
+}
+
+h1{
+  margin:6px 0 4px;
+  font-size:24px;
+  color:var(--cyan);
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:12px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:800px){
+  .grid{grid-template-columns:1fr}
+}
+
+.panel{
+  background:rgba(7,21,34,.92);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 0 22px rgba(0,210,255,.08);
+}
+
+.panel h2{
+  margin:0 0 8px;
+  color:#bdf3ff;
+  font-size:17px;
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+input, select, button{
+  border:1px solid #1d6488;
+  background:#020812;
+  color:var(--text);
+  padding:9px 10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+button{
+  background:#07334a;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:hover{background:#0b4f70}
+
+.btn-main{
+  background:#075c78;
+  border-color:#35cfff;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  font-size:12px;
+}
+
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.unknown{color:var(--yellow);font-weight:bold}
+.open{color:#ffb86b;font-weight:bold}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+th,td{
+  border-bottom:1px solid #123449;
+  padding:8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:#95eaff;
+  background:#06111d;
+  position:sticky;
+  top:0;
+}
+
+.scroll{
+  max-height:380px;
+  overflow:auto;
+  border:1px solid #102f44;
+  border-radius:12px;
+}
+
+pre{
+  background:#020812;
+  border:1px solid #123449;
+  border-radius:12px;
+  padding:10px;
+  overflow:auto;
+  max-height:420px;
+  font-size:12px;
+}
+
+.small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.cardrow{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+}
+
+@media(max-width:900px){
+  .cardrow{grid-template-columns:1fr}
+}
+
+.card{
+  border:1px solid var(--line);
+  background:#05111d;
+  border-radius:12px;
+  padding:10px;
+}
+
+.card .title{
+  color:var(--cyan);
+  font-weight:bold;
+  margin-bottom:4px;
+}
+
+.level{
+  color:#b8c7ff;
+  font-size:12px;
+}
+
+hr{
+  border:none;
+  border-top:1px solid var(--line);
+  margin:10px 0;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>ANY-N Five Conjecture Workbench</h1>
+<div class="sub">
+  Separate scanner for 5 famous conjectures. Same style as your Collatz engine:
+  scan → certificate rows → obstruction rows → open leaves → export packet.
+</div>
+
+<div class="panel">
+  <h2>Control Room</h2>
+  <div class="controls">
+    <label>N:</label>
+    <input id="N" type="number" value="10000" min="100" max="250000" />
+
+    <label>BSD a:</label>
+    <input id="curveA" type="number" value="-1" />
+
+    <label>BSD b:</label>
+    <input id="curveB" type="number" value="1" />
+
+    <button class="btn-main" onclick="runWorkbench()">Run Main Test</button>
+    <button onclick="exportPacket()">Export Current Proof Packet</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
+  <div class="small">
+    PASS here means: surface engine found no obstruction in range. It is not universal proof.
+  </div>
+</div>
+
+<br/>
+
+<div class="cardrow" id="summaryCards"></div>
+
+<br/>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Current Target</h2>
+    <div id="targetBox" class="small">
+      Every selected test should produce either a certificate row or an obstruction row.
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Last Result</h2>
+    <div id="lastBox" class="small">No run yet.</div>
+  </div>
+</div>
+
+<br/>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Certificate Table</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Conjecture</th>
+            <th>Input</th>
+            <th>Certificate</th>
+            <th>Witness</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="certBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Open Leaves / Obstructions</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Conjecture</th>
+            <th>Input</th>
+            <th>Reason</th>
+            <th>Next Action</th>
+          </tr>
+        </thead>
+        <tbody id="openBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<br/>
+
+<div class="panel">
+  <h2>Raw Proof Packet</h2>
+  <pre id="rawOut">Run main test...</pre>
+</div>
+
+</div>
+
+<script>
+/*
+  FIVE CONJECTURE WORKBENCH
+
+  Same engine idea as Collatz:
+  - each test has a target
+  - each successful case creates a certificate row
+  - each bad/missing case creates an open leaf
+  - final report is exportable JSON
+
+  IMPORTANT:
+  This is surface math scanning.
+  Not proof of the open conjectures.
+*/
+
+let CURRENT_PACKET = null;
+
+/* ---------- shared helpers ---------- */
+
+function statusClass(s){
+  if(s === "PASS") return "pass";
+  if(s === "FAIL") return "fail";
+  if(s === "OPEN") return "open";
+  return "unknown";
+}
+
+function esc(x){
+  return String(x)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function isSquare(n){
+  if(n < 0) return false;
+  const r = Math.floor(Math.sqrt(n));
+  return r*r === n;
+}
+
+function isPrime(n){
+  if(n < 2) return false;
+  if(n === 2 || n === 3) return true;
+  if(n % 2 === 0 || n % 3 === 0) return false;
+  for(let i=5;i*i<=n;i+=6){
+    if(n%i===0 || n%(i+2)===0) return false;
+  }
+  return true;
+}
+
+function primesUpTo(N){
+  const sieve = new Uint8Array(N+1);
+  const primes = [];
+  for(let i=2;i<=N;i++) sieve[i]=1;
+  for(let p=2;p*p<=N;p++){
+    if(sieve[p]){
+      for(let q=p*p;q<=N;q+=p) sieve[q]=0;
+    }
+  }
+  for(let i=2;i<=N;i++) if(sieve[i]) primes.push(i);
+  return {sieve, primes};
+}
+
+function makePacket(N,a,b){
+  return {
+    title:"ANY-N Five Conjecture Workbench Packet",
+    created:new Date().toISOString(),
+    warning:"Surface scanner only. Not a proof of open conjectures.",
+    N,
+    curve:{a,b},
+    results:[],
+    certificates:[],
+    openLeaves:[]
+  };
+}
+
+function addCert(packet, conjecture, input, certificate, witness, status="PASS"){
+  packet.certificates.push({
+    conjecture,
+    input,
+    certificate,
+    witness,
+    status
+  });
+}
+
+function addOpen(packet, conjecture, input, reason, nextAction){
+  packet.openLeaves.push({
+    conjecture,
+    input,
+    reason,
+    nextAction
+  });
+}
+
+/* ---------- 1. Goldbach ---------- */
+
+function engineGoldbach(packet, N, primeData){
+  const name = "Goldbach";
+  let checked = 0;
+  let firstFail = null;
+  let lastWitness = null;
+
+  for(let E=4; E<=N; E+=2){
+    checked++;
+    let hit = null;
+
+    for(let p=2; p<=E/2; p++){
+      if(primeData.sieve[p] && primeData.sieve[E-p]){
+        hit = [p, E-p];
+        break;
+      }
+    }
+
+    if(hit){
+      lastWitness = {E, p:hit[0], q:hit[1]};
+      if(E <= 100 || E === N || E % Math.max(1000, Math.floor(N/10)) === 0){
+        addCert(
+          packet,
+          name,
+          E,
+          "E = p + q, both prime",
+          `${E} = ${hit[0]} + ${hit[1]}`
+        );
+      }
+    }else{
+      firstFail = E;
+      addOpen(
+        packet,
+        name,
+        E,
+        "No prime pair found in scanned range.",
+        "Audit prime checker, then increase search or mark obstruction."
+      );
+      break;
+    }
+  }
+
+  packet.results.push({
+    conjecture:name,
+    status:firstFail ? "FAIL" : "PASS",
+    proofLevel:1,
+    checked:`even E from 4 to ${N}`,
+    summary:firstFail
+      ? `First obstruction at E=${firstFail}.`
+      : `No surface obstruction. Checked ${checked} even numbers. Last witness ${lastWitness.E}=${lastWitness.p}+${lastWitness.q}.`
+  });
+}
+
+/* ---------- 2. Twin Prime ---------- */
+
+function engineTwinPrime(packet, N, primeData){
+  const name = "Twin Prime";
+  let pairs = 0;
+  let last = null;
+  let gapMax = 0;
+  let prevPairStart = null;
+
+  for(let p=2;p<=N-2;p++){
+    if(primeData.sieve[p] && primeData.sieve[p+2]){
+      pairs++;
+      last = [p,p+2];
+
+      if(prevPairStart !== null){
+        gapMax = Math.max(gapMax, p - prevPairStart);
+      }
+      prevPairStart = p;
+
+      if(p <= 100 || p % Math.max(1000, Math.floor(N/10)) === 0 || p > N-100){
+        addCert(
+          packet,
+          name,
+          p,
+          "p and p+2 are both prime",
+          `${p}, ${p+2}`
+        );
+      }
+    }
+  }
+
+  if(pairs === 0){
+    addOpen(
+      packet,
+      name,
+      `[2, ${N}]`,
+      "No twin-prime pair found.",
+      "Check prime engine or increase N."
+    );
+  }
+
+  packet.results.push({
+    conjecture:name,
+    status:pairs > 0 ? "PASS" : "FAIL",
+    proofLevel:1,
+    checked:`p and p+2 up to ${N}`,
+    summary:pairs > 0
+      ? `Found ${pairs} pairs. Last pair ${last[0]}, ${last[1]}. Largest observed pair-start gap ${gapMax}.`
+      : `No pair found.`
+  });
+}
+
+/* ---------- 3. Riemann surface scanner ---------- */
+/*
+  This is NOT RH.
+  It is a surface prime-counting fence:
+  π(x) compared to x/log(x).
+*/
+
+function engineRiemannSurface(packet, N, primeData){
+  const name = "Riemann Surface";
+  const checkpoints = [];
+  const step = Math.max(100, Math.floor(N/20));
+
+  let worst = {
+    x:0,
+    pi:0,
+    approx:0,
+    error:0,
+    softBound:0,
+    ratio:0
+  };
+
+  let pi = 0;
+  let nextCheckpoint = step;
+
+  for(let x=2;x<=N;x++){
+    if(primeData.sieve[x]) pi++;
+
+    if(x >= nextCheckpoint || x === N){
+      const approx = x / Math.log(x);
+      const error = Math.abs(pi - approx);
+      const softBound = Math.sqrt(x) * Math.log(x);
+      const ratio = error / softBound;
+
+      checkpoints.push({x, pi, approx, error, softBound, ratio});
+
+      if(ratio > worst.ratio){
+        worst = {x, pi, approx, error, softBound, ratio};
+      }
+
+      addCert(
+        packet,
+        name,
+        x,
+        "π(x) stays inside soft surface fence",
+        `π(${x})=${pi}, error=${error.toFixed(3)}, fence=${softBound.toFixed(3)}`,
+        ratio <= 1 ? "PASS" : "OPEN"
+      );
+
+      if(ratio > 1){
+        addOpen(
+          packet,
+          name,
+          x,
+          "Prime-counting error exceeded soft fence.",
+          "This is not RH failure. Tighten model or compare li(x), R(x), zero-sum approximations."
+        );
+      }
+
+      nextCheckpoint += step;
+    }
+  }
+
+  packet.results.push({
+    conjecture:name,
+    status:worst.ratio <= 1 ? "PASS" : "OPEN",
+    proofLevel:1,
+    checked:`π(x) surface fence up to ${N}`,
+    summary:`Worst checkpoint x=${worst.x}, π=${worst.pi}, error=${worst.error.toFixed(3)}, fence=${worst.softBound.toFixed(3)}, ratio=${worst.ratio.toFixed(4)}.`
+  });
+}
+
+/* ---------- 4. P vs NP toy engine ---------- */
+/*
+  Not a proof.
+  It demonstrates find/check gap on subset sum.
+*/
+
+function verifySubset(nums, target, mask){
+  let sum = 0;
+  for(let i=0;i<nums.length;i++){
+    if(mask & (1 << i)) sum += nums[i];
+  }
+  return sum === target;
+}
+
+function enginePvsNP(packet, N){
+  const name = "P vs NP Toy";
+  const size = Math.min(24, Math.max(12, Math.floor(Math.log2(N)) + 8));
+  const nums = [];
+
+  for(let i=0;i<size;i++){
+    nums.push(((i * 37 + 19) % 97) + 1);
+  }
+
+  const target = nums.slice(0, Math.floor(size/2)).reduce((a,b)=>a+b,0);
+  const maxMask = 1 << size;
+
+  let foundMask = null;
+  let checked = 0;
+
+  const start = performance.now();
+
+  for(let mask=0; mask<maxMask; mask++){
+    checked++;
+    let sum = 0;
+    for(let j=0;j<size;j++){
+      if(mask & (1 << j)) sum += nums[j];
+    }
+    if(sum === target){
+      foundMask = mask;
+      break;
+    }
+  }
+
+  const bruteMS = performance.now() - start;
+  const verifyStart = performance.now();
+  const verified = foundMask !== null ? verifySubset(nums,target,foundMask) : false;
+  const verifyMS = performance.now() - verifyStart;
+
+  if(verified){
+    addCert(
+      packet,
+      name,
+      `items=${size}`,
+      "Found subset and verified quickly",
+      `target=${target}, mask=${foundMask}, bruteChecked=${checked}, bruteMS=${bruteMS.toFixed(3)}, verifyMS=${verifyMS.toFixed(6)}`
+    );
+  }else{
+    addOpen(
+      packet,
+      name,
+      `items=${size}`,
+      "No subset witness found.",
+      "Increase engine depth or check generated target."
+    );
+  }
+
+  packet.results.push({
+    conjecture:name,
+    status:verified ? "PASS" : "FAIL",
+    proofLevel:0,
+    checked:`subset sum toy instance, ${size} items`,
+    summary:verified
+      ? `Witness found after ${checked} masks. Verify was fast. This shows toy find/check gap only.`
+      : `No witness found.`
+  });
+}
+
+/* ---------- 5. Birch and Swinnerton-Dyer toy engine ---------- */
+/*
+  Not BSD.
+  Surface curve scanner:
+  y² = x³ + ax + b
+  Finds integer points in a bounded window.
+*/
+
+function engineBSDToy(packet, N, a, b){
+  const name = "BSD Toy Curve";
+  const X = Math.min(1000, Math.max(50, Math.floor(N/10)));
+  const points = [];
+  let singular = false;
+
+  // discriminant for y^2 = x^3 + ax + b is -16(4a^3 + 27b^2)
+  const discCore = 4*a*a*a + 27*b*b;
+  if(discCore === 0) singular = true;
+
+  if(singular){
+    addOpen(
+      packet,
+      name,
+      `a=${a}, b=${b}`,
+      "Curve is singular. BSD elliptic curve test does not apply.",
+      "Choose a,b with 4a^3 + 27b^2 != 0."
+    );
+  }
+
+  for(let x=-X;x<=X;x++){
+    const rhs = x*x*x + a*x + b;
+    if(rhs >= 0 && isSquare(rhs)){
+      const y = Math.floor(Math.sqrt(rhs));
+      points.push([x,y]);
+      addCert(
+        packet,
+        name,
+        `x=${x}`,
+        "Integer point found on curve",
+        `(${x}, ${y}) satisfies y² = x³ + ${a}x + ${b}`
+      );
+
+      if(y !== 0){
+        points.push([x,-y]);
+        addCert(
+          packet,
+          name,
+          `x=${x}`,
+          "Mirror integer point found on curve",
+          `(${x}, ${-y}) satisfies y² = x³ + ${a}x + ${b}`
+        );
+      }
+    }
+  }
+
+  if(points.length === 0){
+    addOpen(
+      packet,
+      name,
+      `x from ${-X} to ${X}`,
+      "No integer points found in bounded window.",
+      "Increase window or try another elliptic curve."
+    );
+  }
+
+  packet.results.push({
+    conjecture:name,
+    status:singular ? "FAIL" : (points.length ? "PASS" : "OPEN"),
+    proofLevel:0,
+    checked:`integer points on y² = x³ + (${a})x + (${b}), x ∈ [${-X}, ${X}]`,
+    summary:singular
+      ? `Singular curve. Choose new a,b.`
+      : points.length
+        ? `Found ${points.length} integer point hits.`
+        : `No integer points in this window.`
+  });
+}
+
+/* ---------- main runner ---------- */
+
+function runWorkbench(){
+  const N = Number(document.getElementById("N").value || 10000);
+  const a = Number(document.getElementById("curveA").value || -1);
+  const b = Number(document.getElementById("curveB").value || 1);
+
+  const packet = makePacket(N,a,b);
+
+  document.getElementById("targetBox").innerHTML =
+    `Current scan target: <b>5 conjectures</b> up to N=${esc(N)}.<br/>
+     Current obstruction: <b>not set</b>.`;
+
+  const primeData = primesUpTo(Math.max(N,100));
+
+  try{ engineGoldbach(packet,N,primeData); }
+  catch(e){ catchEngine(packet,"Goldbach",e); }
+
+  try{ engineTwinPrime(packet,N,primeData); }
+  catch(e){ catchEngine(packet,"Twin Prime",e); }
+
+  try{ engineRiemannSurface(packet,N,primeData); }
+  catch(e){ catchEngine(packet,"Riemann Surface",e); }
+
+  try{ enginePvsNP(packet,N); }
+  catch(e){ catchEngine(packet,"P vs NP Toy",e); }
+
+  try{ engineBSDToy(packet,N,a,b); }
+  catch(e){ catchEngine(packet,"BSD Toy Curve",e); }
+
+  CURRENT_PACKET = packet;
+  renderPacket(packet);
+}
+
+function catchEngine(packet,name,e){
+  packet.results.push({
+    conjecture:name,
+    status:"FAIL",
+    proofLevel:0,
+    checked:"engine crashed",
+    summary:String(e && e.message ? e.message : e)
+  });
+
+  addOpen(
+    packet,
+    name,
+    "engine",
+    String(e && e.message ? e.message : e),
+    "Fix engine crash."
+  );
+}
+
+/* ---------- render ---------- */
+
+function renderPacket(packet){
+  const cards = document.getElementById("summaryCards");
+  cards.innerHTML = "";
+
+  for(const r of packet.results){
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <div class="title">${esc(r.conjecture)}</div>
+      <div class="${statusClass(r.status)}">${esc(r.status)}</div>
+      <div class="level">Proof level: ${esc(r.proofLevel)}</div>
+      <hr/>
+      <div class="small">${esc(r.summary)}</div>
+    `;
+    cards.appendChild(div);
+  }
+
+  const certBody = document.getElementById("certBody");
+  certBody.innerHTML = "";
+  for(const c of packet.certificates){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${esc(c.conjecture)}</td>
+      <td>${esc(c.input)}</td>
+      <td>${esc(c.certificate)}</td>
+      <td>${esc(c.witness)}</td>
+      <td class="${statusClass(c.status)}">${esc(c.status)}</td>
+    `;
+    certBody.appendChild(tr);
+  }
+
+  const openBody = document.getElementById("openBody");
+  openBody.innerHTML = "";
+  for(const o of packet.openLeaves){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${esc(o.conjecture)}</td>
+      <td>${esc(o.input)}</td>
+      <td>${esc(o.reason)}</td>
+      <td>${esc(o.nextAction)}</td>
+    `;
+    openBody.appendChild(tr);
+  }
+
+  const totalPass = packet.results.filter(r=>r.status==="PASS").length;
+  const totalFail = packet.results.filter(r=>r.status==="FAIL").length;
+  const totalOpen = packet.results.filter(r=>r.status==="OPEN").length;
+
+  document.getElementById("lastBox").innerHTML =
+    `FIVE CONJECTURE SURFACE ENGINE COMPLETE<br/>
+     PASS: <span class="pass">${totalPass}</span> |
+     FAIL: <span class="fail">${totalFail}</span> |
+     OPEN: <span class="open">${totalOpen}</span><br/>
+     certificates: ${packet.certificates.length} |
+     open leaves: ${packet.openLeaves.length}`;
+
+  document.getElementById("rawOut").textContent = JSON.stringify(packet,null,2);
+}
+
+/* ---------- export / clear ---------- */
+
+function exportPacket(){
+  if(!CURRENT_PACKET){
+    alert("Run main test first.");
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(CURRENT_PACKET,null,2)], {
+    type:"application/json"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "five_conjecture_surface_packet.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearAll(){
+  CURRENT_PACKET = null;
+  document.getElementById("summaryCards").innerHTML = "";
+  document.getElementById("certBody").innerHTML = "";
+  document.getElementById("openBody").innerHTML = "";
+  document.getElementById("rawOut").textContent = "Run main test...";
+  document.getElementById("lastBox").textContent = "No run yet.";
+  document.getElementById("targetBox").textContent =
+    "Every selected test should produce either a certificate row or an obstruction row.";
+}
+</script>
+</body>
+</html>

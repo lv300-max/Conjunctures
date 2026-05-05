@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Reviewer Q&A Engine — Proof Workbench</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+:root{
+  --bg:#02060b;
+  --panel:#071522;
+  --panel2:#0a1f31;
+  --line:#16425c;
+  --text:#e8f8ff;
+  --muted:#9bb5c7;
+  --cyan:#7ee7ff;
+  --green:#7dff9b;
+  --yellow:#ffd86b;
+  --red:#ff7373;
+  --orange:#ffae5d;
+  --purple:#c9a7ff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(0,220,255,.16), transparent 34%),
+    radial-gradient(circle at 85% 10%, rgba(150,100,255,.14), transparent 30%),
+    linear-gradient(180deg,#02060b,#050b12,#010409);
+  color:var(--text);
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.wrap{
+  max-width:1250px;
+  margin:auto;
+  padding:14px;
+}
+
+h1{
+  color:var(--cyan);
+  margin:8px 0 4px;
+  font-size:26px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:12px;
+}
+
+.panel{
+  background:rgba(7,21,34,.95);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 0 24px rgba(0,200,255,.08);
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
+input, select, textarea, button{
+  border:1px solid #1f6f94;
+  background:#020812;
+  color:var(--text);
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+textarea{
+  width:100%;
+  min-height:90px;
+  resize:vertical;
+}
+
+button{
+  background:#07344c;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:hover{background:#0b5174}
+
+.btn-main{
+  background:#075f7b;
+  border-color:#45dfff;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:850px){
+  .grid{grid-template-columns:1fr}
+}
+
+.grid3{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+@media(max-width:850px){
+  .grid3{grid-template-columns:1fr}
+}
+
+.card{
+  background:#06131f;
+  border:1px solid #12384f;
+  border-radius:14px;
+  padding:12px;
+}
+
+.card h2{
+  color:#bdf3ff;
+  margin:0 0 8px;
+  font-size:17px;
+}
+
+.good{color:var(--green);font-weight:bold}
+.warn{color:var(--yellow);font-weight:bold}
+.bad{color:var(--red);font-weight:bold}
+.mid{color:var(--orange);font-weight:bold}
+.cyan{color:var(--cyan);font-weight:bold}
+.purple{color:var(--purple);font-weight:bold}
+.small{color:var(--muted);font-size:13px}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+th,td{
+  border-bottom:1px solid #12384f;
+  padding:8px;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{
+  color:#9be9ff;
+  background:#06111d;
+  position:sticky;
+  top:0;
+}
+
+.scroll{
+  max-height:470px;
+  overflow:auto;
+  border:1px solid #102f44;
+  border-radius:12px;
+}
+
+pre{
+  background:#020812;
+  border:1px solid #12384f;
+  border-radius:12px;
+  padding:12px;
+  overflow:auto;
+  white-space:pre-wrap;
+  max-height:470px;
+  font-size:13px;
+}
+
+.badge{
+  display:inline-block;
+  border:1px solid #244e68;
+  border-radius:999px;
+  padding:4px 8px;
+  margin:2px;
+  font-size:12px;
+}
+
+.pass{color:var(--green)}
+.open{color:var(--yellow)}
+.fail{color:var(--red)}
+.ready{color:var(--cyan)}
+.blocked{color:var(--orange)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Reviewer Q&A Engine</h1>
+<div class="sub">
+  This makes your app answer the questions David Farmer, Tao, or any reviewer would ask.
+</div>
+
+<div class="panel">
+  <div class="controls">
+    <label>Proof mode:</label>
+    <select id="mode">
+      <option value="honest">Honest Current State</option>
+      <option value="candidate">Proof Candidate Draft</option>
+      <option value="conservative">Very Conservative</option>
+    </select>
+
+    <label>Base modulus:</label>
+    <input id="modulus" value="2^16" />
+
+    <label>Packet rows:</label>
+    <input id="packetRows" type="number" value="84" />
+
+    <label>Parent closure:</label>
+    <input id="parentClosure" value="578/578" />
+
+    <label>Exact states:</label>
+    <input id="exactStates" value="1235" />
+
+    <button class="btn-main" onclick="runQA()">Run Reviewer Q&A</button>
+    <button onclick="exportJSON()">Export Q&A Packet</button>
+    <button onclick="copyReviewerSummary()">Copy Reviewer Summary</button>
+  </div>
+</div>
+
+<div class="grid3">
+  <div class="card">
+    <h2>Claim Status</h2>
+    <div id="claimStatus" class="small">Run Q&A...</div>
+  </div>
+
+  <div class="card">
+    <h2>Danger Gate</h2>
+    <div id="dangerStatus" class="small">Run Q&A...</div>
+  </div>
+
+  <div class="card">
+    <h2>Send Status</h2>
+    <div id="sendStatus" class="small">Run Q&A...</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h2>Reviewer Questions</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Question</th>
+            <th>Status</th>
+            <th>Short Answer</th>
+          </tr>
+        </thead>
+        <tbody id="qaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Selected Full Answer</h2>
+    <pre id="fullAnswer">Click a question row...</pre>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Reviewer-Safe Summary</h2>
+  <pre id="summaryOut">Run Q&A...</pre>
+</div>
+
+<div class="panel">
+  <h2>Missing Documents</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Why needed</th>
+          <th>Status</th>
+          <th>First paragraph</th>
+        </tr>
+      </thead>
+      <tbody id="docsBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Raw Q&A Packet</h2>
+  <pre id="rawOut">Run Q&A...</pre>
+</div>
+
+</div>
+
+<script>
+let LAST_PACKET = null;
+
+const BASE_QUESTIONS = [
+  {
+    id:1,
+    q:"What exact theorem are you claiming?",
+    status:"READY",
+    short:"The target theorem is Collatz for all positive integers, but the current safe claim is about verified certificate coverage.",
+    answer:function(ctx){
+      return `Exact theorem target:
+
+For every positive integer n, repeated application of the Collatz map eventually reaches 1.
+
+Map:
+- if n is even, n → n/2
+- if n is odd, n → 3n + 1
+
+Current safe claim:
+
+The workbench verifies a structured certificate system. The strong proof claim is only valid if the packet universe and lift/coverage rules truly cover every positive integer with no hidden quotient-state loss.
+
+I am not asking the reviewer to trust the UI. I am asking them to check the definitions, lemmas, certificate rows, and closure audits.`;
+    }
+  },
+  {
+    id:2,
+    q:"What is finite checking, and what is universal proof?",
+    status:"READY",
+    short:"Finite scans are evidence. Universal proof needs a rule covering all integers.",
+    answer:function(ctx){
+      return `Finite checking:
+
+The app can test many numbers, residues, rows, and transitions. That is useful, but it does not by itself prove Collatz.
+
+Universal proof:
+
+A proof needs a statement with quantifiers like:
+
+For every positive integer n, n belongs to a covered class, and that class forces a certified descent or reaches a known closed smaller case.
+
+The app separates these two things:
+- scan results
+- certificate rows
+- universal coverage claims
+- open proof gaps`;
+    }
+  },
+  {
+    id:3,
+    q:"What set does the packet universe cover?",
+    status:"OPEN",
+    short:"Needs exact PACKET_UNIVERSE_COMPLETENESS writeup.",
+    answer:function(ctx){
+      return `Packet universe question:
+
+Current packet rows: ${ctx.packetRows}
+Current base modulus: ${ctx.modulus}
+
+The reviewer will ask:
+
+What exact set do these ${ctx.packetRows} rows cover?
+
+Required answer structure:
+
+1. Define the universe U exactly.
+2. Define each packet row as a subset of U.
+3. Prove every element of U appears in at least one row.
+4. Prove no element appears in two incompatible rows.
+5. Prove every positive integer eventually maps into U or is already closed.
+6. Show this without relying on sampled examples.
+
+Current status:
+
+OPEN until PACKET_UNIVERSE_COMPLETENESS.md is written and independently checkable.`;
+    }
+  },
+  {
+    id:4,
+    q:"Does quotient compression lose information?",
+    status:"OPEN",
+    short:"Exact-state closure is safer. Quotient shortcut must be proven or removed.",
+    answer:function(ctx){
+      return `Quotient-state danger:
+
+A quotient key is dangerous if two different full states share the same compressed label but later require different valuation words, bounds, or descent witnesses.
+
+Safe answer:
+
+The proof should not depend on quotient compression unless there is a separate invariant proving it preserves all proof-critical state.
+
+Current safe engine:
+
+- exact-state closure checked: ${ctx.exactStates}
+- parent closure: ${ctx.parentClosure}
+
+Current reviewer-safe position:
+
+Use exact-state closure as the proof-facing engine. Treat quotient abstraction as a convenience layer only, unless proven valid.`;
+    }
+  },
+  {
+    id:5,
+    q:"How do you prove valuation forcing?",
+    status:"BLOCKED",
+    short:"Need row-by-row proof that the same division word is forced for all lifts.",
+    answer:function(ctx){
+      return `Valuation forcing:
+
+For each row, the proof must show that every n in the row has the same forced division pattern.
+
+Not enough:
+- testing examples
+- checking representatives only
+- matching visual patterns
+
+Needed:
+
+For a row with modulus condition n ≡ r mod M, prove the sequence of 2-adic valuations is fixed for all lifts n = r + kM.
+
+That produces the affine iterate:
+
+T^m(n) = (3^o n + b) / 2^c
+
+This is proof-critical because if the valuation word changes, the formula can be wrong for some lifts.
+
+Current status:
+
+BLOCKED unless each packet row exports:
+- modulus
+- residue condition
+- valuation word
+- affine formula
+- proof/checker that every lift preserves the word.`;
+    }
+  },
+  {
+    id:6,
+    q:"What is the descent inequality?",
+    status:"READY",
+    short:"If gap = 2^c - 3^o > 0 and n > B, then T^m(n) < n.",
+    answer:function(ctx){
+      return `Descent inequality:
+
+For a certified row:
+
+T^m(n) = (3^o n + b) / 2^c
+
+Let:
+
+gap = 2^c - 3^o
+
+If gap > 0, define:
+
+B = ceil(b / gap)
+
+Integer-safe form:
+
+B = (b + gap - 1) // gap
+
+Then for all n > B:
+
+T^m(n) < n
+
+Why:
+
+(3^o n + b) / 2^c < n
+3^o n + b < 2^c n
+b < (2^c - 3^o)n
+b < gap · n
+
+So n > b/gap gives descent.`;
+    }
+  },
+  {
+    id:7,
+    q:"What happens to cases n ≤ B?",
+    status:"OPEN",
+    short:"Every below-bound exception needs direct closure or another certificate.",
+    answer:function(ctx){
+      return `Small-bound cases:
+
+Every certificate row creates a bound B.
+
+For n > B:
+- descent is automatic.
+
+For n ≤ B:
+- the app must show direct closure
+- or known-out closure
+- or smaller-odd descent
+- or another valid certificate
+
+Reviewer demand:
+
+No row may say "probably handled."
+
+Needed table:
+
+row_id | B | small cases checked | closure witness | status
+
+Current status:
+
+OPEN unless that exact table is exported for every row.`;
+    }
+  },
+  {
+    id:8,
+    q:"Why does descent imply the full Collatz theorem?",
+    status:"READY",
+    short:"Use smallest-counterexample induction.",
+    answer:function(ctx){
+      return `Induction bridge:
+
+Assume there is a counterexample.
+
+Let n be the smallest positive counterexample.
+
+If the proof system is universal, n is covered by a certificate.
+
+That certificate sends n to a smaller positive integer m < n.
+
+Because n was the smallest counterexample, m cannot be a counterexample.
+
+So m reaches 1.
+
+Then n reaches m, then reaches 1.
+
+Contradiction.
+
+Therefore no counterexample exists.
+
+Important:
+
+This only works if coverage is universal.`;
+    }
+  },
+  {
+    id:9,
+    q:"Where are cycles ruled out?",
+    status:"READY",
+    short:"Universal strict descent rules out nontrivial cycles through smallest-counterexample logic.",
+    answer:function(ctx){
+      return `Cycles:
+
+A nontrivial cycle would contain a smallest number n in that cycle.
+
+If universal descent applies to n, then some certified iterate sends n below itself.
+
+That is impossible if n is the smallest number in the cycle.
+
+So universal strict descent rules out nontrivial cycles.
+
+Again, this depends on universal coverage.`;
+    }
+  },
+  {
+    id:10,
+    q:"Where is divergence ruled out?",
+    status:"READY",
+    short:"If every number has certified descent to a smaller case, infinite escape is blocked.",
+    answer:function(ctx){
+      return `Divergence:
+
+A divergent path would never reach 1.
+
+But if every starting value is covered by a certificate that eventually drops below its start, then it enters a smaller case.
+
+Repeating this descent cannot continue forever through positive integers because positive integers are well-ordered.
+
+So it must eventually reach the known base cycle 1 → 4 → 2 → 1.
+
+This is valid only if every number is covered.`;
+    }
+  },
+  {
+    id:11,
+    q:"Can the proof be verified without the app?",
+    status:"OPEN",
+    short:"Needs plain-text theorem, lemmas, raw JSON, and independent checker.",
+    answer:function(ctx){
+      return `Independent verification:
+
+A reviewer should not need the visual app.
+
+Needed files:
+
+1. THEOREM_CLAIM.md
+2. DEFINITIONS.md
+3. PACKET_UNIVERSE_COMPLETENESS.md
+4. VALUATION_FORCING_LEMMA.md
+5. DESCENT_LEMMA.md
+6. SMALL_CASES_TABLE.json
+7. EXACT_STATE_CLOSURE_REPORT.json
+8. independent_checker.py
+
+The app is a workbench.
+
+The proof must exist as plain text plus reproducible checkers.`;
+    }
+  },
+  {
+    id:12,
+    q:"What would make this a proof candidate?",
+    status:"OPEN",
+    short:"Universal coverage + valuation forcing + small-case closure + independent check.",
+    answer:function(ctx){
+      return `Proof candidate gate:
+
+This becomes a proof candidate only when all these are true:
+
+1. Exact theorem is stated.
+2. Packet universe is defined.
+3. Packet coverage is proven complete.
+4. Rows are non-overlapping or compatible.
+5. Each row forces a valuation word.
+6. Each row has affine formula data.
+7. Each row has gap > 0 or another closure route.
+8. Each row handles n ≤ B.
+9. Exact-state closure has no hidden quotient loss.
+10. Independent checker reproduces all results.
+11. Smallest-counterexample induction is written clearly.
+
+Until then:
+
+It is a serious certificate workbench, not an accepted proof.`;
+    }
+  }
+];
+
+const DOCS = [
+  {
+    file:"THEOREM_CLAIM.md",
+    why:"States exactly what is being claimed and what is not.",
+    status:"NEEDED",
+    first:"This document states the exact theorem target, the current verified claims, and the remaining proof gaps. The target theorem is the Collatz conjecture for all positive integers. The current workbench claim is limited to verified certificate machinery unless universal coverage is proven."
+  },
+  {
+    file:"PACKET_UNIVERSE_COMPLETENESS.md",
+    why:"Defines what the packet covers and why it covers all needed cases.",
+    status:"CRITICAL",
+    first:"Let U be the exact universe of states/residues handled by the packet. This document defines U, defines each packet row as a subset of U, proves that the rows cover U, proves compatibility/non-overlap, and explains how arbitrary positive integers enter U or are otherwise closed."
+  },
+  {
+    file:"VALUATION_FORCING_LEMMA.md",
+    why:"Shows each row forces the same division pattern for all lifts.",
+    status:"CRITICAL",
+    first:"For each packet row, the residue condition must force a fixed 2-adic valuation word. This document proves that every lift of the row keeps the same valuation sequence and therefore the same affine iterate."
+  },
+  {
+    file:"DESCENT_LEMMA.md",
+    why:"Turns affine rows into strict descent.",
+    status:"READY",
+    first:"For each row with T^m(n) = (3^o n + b) / 2^c, define gap = 2^c - 3^o. If gap > 0 and n > ceil(b/gap), then T^m(n) < n."
+  },
+  {
+    file:"SMALL_CASES_TABLE.json",
+    why:"Handles all n ≤ B exceptions.",
+    status:"NEEDED",
+    first:"This machine-readable table lists every row, its bound B, every small case below or equal to B, and the witness that closes the case."
+  },
+  {
+    file:"QUOTIENT_STATE_AUDIT.md",
+    why:"Proves or removes quotient compression.",
+    status:"CRITICAL",
+    first:"This document explains whether quotient-state compression preserves all proof-critical information. If not proven, quotient labels are treated as display-only and exact-state closure is used for proof-facing claims."
+  },
+  {
+    file:"INDEPENDENT_CHECKER.py",
+    why:"Lets reviewer reproduce results without trusting the app.",
+    status:"NEEDED",
+    first:"This script independently verifies packet rows, valuation words, affine formulas, descent bounds, small cases, and exact-state transitions from raw JSON input."
+  }
+];
+
+function ctx(){
+  return {
+    mode:document.getElementById("mode").value,
+    modulus:document.getElementById("modulus").value,
+    packetRows:Number(document.getElementById("packetRows").value || 84),
+    parentClosure:document.getElementById("parentClosure").value,
+    exactStates:document.getElementById("exactStates").value
+  };
+}
+
+function runQA(){
+  const c = ctx();
+
+  const questions = BASE_QUESTIONS.map(item => {
+    return {
+      id:item.id,
+      question:item.q,
+      status:adjustStatus(item.status, c.mode),
+      short:item.short,
+      fullAnswer:item.answer(c)
+    };
+  });
+
+  const open = questions.filter(x => x.status === "OPEN").length;
+  const blocked = questions.filter(x => x.status === "BLOCKED").length;
+  const ready = questions.filter(x => x.status === "READY").length;
+
+  const packet = {
+    title:"Reviewer Q&A Packet",
+    created:new Date().toISOString(),
+    mode:c.mode,
+    inputs:c,
+    status:{
+      ready,
+      open,
+      blocked,
+      canSend: blocked === 0,
+      proofCandidate: c.mode === "candidate" && open === 0 && blocked === 0
+    },
+    questions,
+    neededDocuments:DOCS,
+    reviewerSafeSummary:makeSummary(c, ready, open, blocked)
+  };
+
+  LAST_PACKET = packet;
+  render(packet);
+}
+
+function adjustStatus(status, mode){
+  if(mode === "conservative"){
+    if(status === "READY") return "READY";
+    return status;
+  }
+
+  if(mode === "candidate"){
+    if(status === "BLOCKED") return "OPEN";
+    return status;
+  }
+
+  return status;
+}
+
+function makeSummary(c, ready, open, blocked){
+  return `REVIEWER-SAFE SUMMARY
+
+I built a Collatz certificate workbench.
+
+I am not asking you to trust the UI.
+
+The target theorem is:
+For every positive integer n, the Collatz orbit reaches 1.
+
+Current verified machinery:
+- base modulus: ${c.modulus}
+- packet rows: ${c.packetRows}
+- parent closure: ${c.parentClosure}
+- exact states checked: ${c.exactStates}
+
+Current safe claim:
+The app verifies structured certificate rows and exact-state closure data. A full proof claim depends on whether packet coverage, valuation forcing, lift closure, and small-case closure are universal.
+
+Main open checks:
+1. Define the packet universe exactly.
+2. Prove every required integer/state enters the packet or is already closed.
+3. Prove each packet row forces the same valuation word for all lifts.
+4. Prove quotient compression is not used, or prove it preserves proof-critical state.
+5. Export every small case n ≤ B with a closure witness.
+6. Provide an independent checker.
+
+Q&A status:
+READY answers: ${ready}
+OPEN answers: ${open}
+BLOCKED answers: ${blocked}
+
+Best current wording:
+This is a serious certificate workbench with several passing internal audits. It is not an accepted proof unless the universal coverage and valuation forcing steps are written and independently verified.`;
+}
+
+function render(packet){
+  renderCards(packet);
+  renderQuestions(packet);
+  renderDocs(packet);
+  document.getElementById("summaryOut").textContent = packet.reviewerSafeSummary;
+  document.getElementById("rawOut").textContent = JSON.stringify(packet,null,2);
+  document.getElementById("fullAnswer").textContent = "Click a question row...";
+}
+
+function renderCards(packet){
+  const s = packet.status;
+
+  document.getElementById("claimStatus").innerHTML = `
+    <div>READY: <span class="good">${s.ready}</span></div>
+    <div>OPEN: <span class="warn">${s.open}</span></div>
+    <div>BLOCKED: <span class="bad">${s.blocked}</span></div>
+  `;
+
+  document.getElementById("dangerStatus").innerHTML = s.blocked
+    ? `<span class="bad">BLOCKED</span><br><span class="small">Do not call it proof yet.</span>`
+    : s.open
+      ? `<span class="warn">OPEN</span><br><span class="small">Safe to send as workbench, not proof.</span>`
+      : `<span class="good">CLEAR</span><br><span class="small">Proof-candidate wording allowed.`;
+
+  document.getElementById("sendStatus").innerHTML = `
+    <div class="${s.canSend ? "good" : "warn"}">${s.canSend ? "SENDABLE" : "SEND WITH WARNING"}</div>
+    <div class="small">Best label: ${s.proofCandidate ? "Proof candidate" : "Certificate workbench"}</div>
+  `;
+}
+
+function renderQuestions(packet){
+  const body = document.getElementById("qaBody");
+  body.innerHTML = "";
+
+  for(const item of packet.questions){
+    const tr = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    tr.onclick = () => {
+      document.getElementById("fullAnswer").textContent =
+`QUESTION ${item.id}:
+${item.question}
+
+STATUS:
+${item.status}
+
+ANSWER:
+${item.fullAnswer}`;
+    };
+
+    tr.innerHTML = `
+      <td>${item.id}</td>
+      <td>${esc(item.question)}</td>
+      <td><span class="${statusClass(item.status)}">${esc(item.status)}</span></td>
+      <td>${esc(item.short)}</td>
+    `;
+
+    body.appendChild(tr);
+  }
+}
+
+function renderDocs(packet){
+  const body = document.getElementById("docsBody");
+  body.innerHTML = "";
+
+  for(const d of packet.neededDocuments){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>${esc(d.file)}</b></td>
+      <td>${esc(d.why)}</td>
+      <td><span class="${docClass(d.status)}">${esc(d.status)}</span></td>
+      <td>${esc(d.first)}</td>
+    `;
+    body.appendChild(tr);
+  }
+}
+
+function exportJSON(){
+  if(!LAST_PACKET){
+    runQA();
+  }
+
+  const blob = new Blob([JSON.stringify(LAST_PACKET,null,2)], {
+    type:"application/json"
+  });
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "reviewer_question_answer_packet.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyReviewerSummary(){
+  if(!LAST_PACKET){
+    runQA();
+  }
+
+  navigator.clipboard.writeText(LAST_PACKET.reviewerSafeSummary).then(()=>{
+    alert("Reviewer summary copied.");
+  });
+}
+
+function statusClass(s){
+  if(s === "READY") return "ready";
+  if(s === "OPEN") return "open";
+  if(s === "BLOCKED") return "blocked";
+  return "";
+}
+
+function docClass(s){
+  if(s === "READY") return "pass";
+  if(s === "NEEDED") return "open";
+  if(s === "CRITICAL") return "fail";
+  return "";
+}
+
+function esc(x){
+  return String(x)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+runQA();
+</script>
+</body>
+</html>
