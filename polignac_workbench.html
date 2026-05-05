@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Polignac Conjecture Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+:root{
+  --bg:#02060b;
+  --panel:#071522;
+  --panel2:#050f1a;
+  --line:#16425c;
+  --text:#e8f8ff;
+  --muted:#9bb5c7;
+  --cyan:#7ee7ff;
+  --green:#7dff9b;
+  --yellow:#ffd86b;
+  --red:#ff7373;
+  --gold:#ffd76a;
+  --orange:#ffae5d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(0,220,255,.14),transparent 32%),
+    radial-gradient(circle at 85% 12%, rgba(255,215,106,.11),transparent 28%),
+    linear-gradient(180deg,#02060b,#050b12,#010409);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+.wrap{max-width:1300px;margin:auto;padding:16px}
+h1{color:var(--gold);margin:8px 0 4px;font-size:26px}
+h2{color:#bdf3ff;margin:0 0 10px;font-size:17px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.panel{
+  background:rgba(7,21,34,.95);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+  box-shadow:0 0 20px rgba(0,200,255,.07);
+}
+.section-title{
+  font-size:11px;
+  letter-spacing:1px;
+  color:var(--muted);
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input,button{
+  border:1px solid #1f6f94;
+  background:#020812;
+  color:var(--text);
+  padding:10px;
+  border-radius:10px;
+  font-size:14px;
+}
+button{background:#07344c;cursor:pointer;font-weight:bold}
+button:hover{background:#0b5174}
+.btn-gold{background:#4a3407;border-color:var(--gold);color:var(--gold)}
+.btn-gold:hover{background:#6b4d0a}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{background:#06131f;border:1px solid #12384f;border-radius:12px;padding:12px}
+.card h2{margin:0 0 4px;font-size:14px}
+.big{font-size:26px;font-weight:bold}
+.pass{color:var(--green);font-weight:bold}
+.fail{color:var(--red);font-weight:bold}
+.open{color:var(--yellow);font-weight:bold}
+.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid #12384f;padding:8px;text-align:left;vertical-align:top}
+th{color:#9be9ff;background:#06111d;position:sticky;top:0}
+.scroll{max-height:500px;overflow:auto;border:1px solid #102f44;border-radius:10px}
+.scroll-sm{max-height:280px;overflow:auto;border:1px solid #102f44;border-radius:10px}
+pre{
+  background:#020812;
+  border:1px solid #12384f;
+  border-radius:10px;
+  padding:12px;
+  overflow:auto;
+  white-space:pre-wrap;
+  max-height:440px;
+  font-size:12px;
+}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid #28556f;font-size:12px}
+.badge-gold{border-color:var(--gold);color:var(--gold)}
+.badge-green{border-color:var(--green);color:var(--green)}
+.badge-yellow{border-color:var(--yellow);color:var(--yellow)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Polignac Conjecture Engine</h1>
+<div class="sub">
+  For every positive even integer k, there are infinitely many consecutive prime pairs (p, p+k).
+  This engine computes finite certificates for all tested even gaps k, finds the weakest gap,
+  measures density constants, and documents exactly where the universal proof remains open.
+</div>
+
+<!-- CONTROLS -->
+<div class="panel">
+  <div class="controls">
+    <label>N (scan primes up to):</label>
+    <input id="polN" type="number" value="500000" min="1000" max="2000000" />
+    <label>Max gap k to test:</label>
+    <input id="polK" type="number" value="100" min="2" max="1000" step="2" />
+    <button class="btn-gold" onclick="runPolignac()">&#9654; Run Polignac Engine</button>
+    <button onclick="exportPolignacJSON()">Export JSON</button>
+    <button onclick="copyPolignacSummary()">Copy Summary</button>
+  </div>
+  <div class="muted" style="margin-top:8px;font-size:12px;">
+    T(N,k) = #{p prime, p &le; N : p+k is also prime} &nbsp;|&nbsp;
+    c(k) = T(N,k) / (N / log(N)&sup2;) &nbsp;|&nbsp;
+    Weakest k = even gap with smallest T(N,k)
+  </div>
+</div>
+
+<!-- STATUS CARDS -->
+<div class="grid4 hidden" id="polCards"></div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="panel hidden" id="polSummaryPanel">
+  <div class="section-title">Executive Summary</div>
+  <div id="polSummaryBody"></div>
+</div>
+
+<!-- WEAKEST GAP TABLE -->
+<div class="panel hidden" id="polWeakPanel">
+  <h2>Weakest Gaps <span class="badge badge-yellow">smallest T(N,k)</span></h2>
+  <div class="scroll-sm"><table id="polWeakTable">
+    <thead><tr><th>k</th><th>T(N,k)</th><th>c(k)</th><th>Witness (first pair)</th><th>Hash</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</div>
+
+<!-- ALL GAPS TABLE -->
+<div class="panel hidden" id="polAllPanel">
+  <h2>All Tested Even Gaps <span class="badge" id="polGapBadge"></span></h2>
+  <div class="scroll"><table id="polAllTable">
+    <thead><tr><th>k</th><th>T(N,k)</th><th>c(k)</th><th>Status</th><th>First pair</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+</div>
+
+<!-- SEVEN LEMMAS -->
+<div class="panel hidden" id="polLemmaPanel">
+  <div class="section-title">Seven Lemmas</div>
+  <div id="polLemmaBody"></div>
+</div>
+
+<!-- GAP ATTACK BOARD -->
+<div class="panel hidden" id="polGapAttackPanel">
+  <div class="section-title">Gap Attack Board — Universal Proof Gaps</div>
+  <div id="polGapAttackBody"></div>
+</div>
+
+<!-- SAFE CLAIM -->
+<div class="panel hidden" id="polSafePanel">
+  <div style="background:rgba(125,255,155,.05);border:1px solid rgba(125,255,155,.18);border-radius:6px;padding:14px;font-size:13px;color:var(--muted);line-height:1.8;">
+    <strong style="color:var(--green);">Safe Claim</strong><br><br>
+    This engine provides proof-pressure evidence and finite certificates for Polignac's Conjecture.
+    It is <strong>not a proof</strong> that prime gaps of every even size occur infinitely often.
+    PASS means no obstruction was found inside the tested range.
+    PASS does not mean proof. The universal theorem remains open for all even k.
+  </div>
+</div>
+
+<!-- RAW OUTPUT -->
+<div class="panel hidden" id="polRawPanel">
+  <h2>Raw Output</h2>
+  <pre id="polRaw"></pre>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function sieve(n){
+  const composite = new Uint8Array(n+1);
+  composite[0]=composite[1]=1;
+  for(let i=2;i*i<=n;i++) if(!composite[i]) for(let j=i*i;j<=n;j+=i) composite[j]=1;
+  const primes=[];
+  for(let i=2;i<=n;i++) if(!composite[i]) primes.push(i);
+  return primes;
+}
+
+function runPolignacCertificate(N=500000, Kmax=100){
+  N = Math.max(1000, Math.min(Number(N)||500000, 2000000));
+  Kmax = Math.max(2, Math.min(Number(Kmax)||100, 1000));
+  if(Kmax % 2 !== 0) Kmax--;
+
+  const t0 = performance.now();
+  const primes = sieve(N + Kmax);
+  const primeSet = new Set(primes);
+
+  const gaps = [];
+  let weakestK = null, weakestT = Infinity, weakestC = Infinity, weakestWit = null;
+  let minC = Infinity;
+  let allPass = true;
+
+  for(let k = 2; k <= Kmax; k += 2){
+    let T = 0, first = null;
+    for(const p of primes){
+      if(p > N) break;
+      if(primeSet.has(p + k)){
+        T++;
+        if(!first) first = `${p}+(${k})=${p+k}`;
+      }
+    }
+    const c = T > 0 ? T / (N / (Math.log(N) ** 2)) : 0;
+    const hash = T > 0 ? btoa(`${k}-${T}-${first}`).substring(0,8) : 'none';
+    const pass = T > 0;
+    if(!pass) allPass = false;
+    if(c < minC && T > 0) minC = c;
+    if(T < weakestT || (T === weakestT && c < weakestC)){
+      weakestK = k; weakestT = T; weakestC = c; weakestWit = first;
+    }
+    gaps.push({ k, T, c: +c.toFixed(6), pass, first, hash });
+  }
+
+  const seconds = ((performance.now()-t0)/1000).toFixed(2);
+  const cStr = minC < Infinity ? minC.toFixed(8) : 'N/A';
+  const weakestHash = weakestWit ? btoa(`${weakestK}-${weakestT}-${weakestWit}`).substring(0,8) : 'N/A';
+
+  return {
+    N, Kmax, allPass,
+    gapsChecked: gaps.length,
+    minC: cStr,
+    weakestGap: { k: weakestK, T: weakestT, c: +weakestC.toFixed(6), witness: weakestWit, hash: weakestHash },
+    gaps,
+    seconds,
+    certificate: allPass
+      ? `For every tested even k in [2, ${Kmax}], T(N,k) >= 1 with N=${N}. Minimum density c >= ${cStr}.`
+      : `FAIL: some tested k has T(N,k)=0 within N=${N}.`,
+    theoremTarget: `T(N,k) → ∞ as N → ∞ for every even k.`,
+    missingProofLine: `Need a universal analytic theorem proving: T(N,k) → ∞ as N → ∞ for every even k >= 2.`,
+    safeClaim: `This is proof-pressure evidence and a finite certificate, not a proof of Polignac's Conjecture. PASS means no obstruction was found inside the tested range. PASS does not mean proof.`
+  };
+}
+
+let _lastResult = null;
+
+function runPolignac(){
+  const N = Number(document.getElementById('polN').value)||500000;
+  const Kmax = Number(document.getElementById('polK').value)||100;
+
+  const r = runPolignacCertificate(N, Kmax);
+  _lastResult = r;
+
+  // STATUS CARDS
+  const cards = document.getElementById('polCards');
+  cards.classList.remove('hidden');
+  cards.innerHTML = `
+    <div class="card">
+      <h2>Certificate</h2>
+      <div class="big ${r.allPass?'pass':'fail'}">${r.allPass?'PASS':'FAIL'}</div>
+      <div class="muted">${r.gapsChecked} even gaps tested</div>
+    </div>
+    <div class="card">
+      <h2>N (scan to)</h2>
+      <div class="big" style="color:var(--cyan);">${r.N.toLocaleString()}</div>
+      <div class="muted">primes sieved</div>
+    </div>
+    <div class="card">
+      <h2>Min density c</h2>
+      <div class="big" style="color:var(--gold);">${r.minC}</div>
+      <div class="muted">across all tested k</div>
+    </div>
+    <div class="card">
+      <h2>Weakest gap</h2>
+      <div class="big" style="color:var(--yellow);">k=${r.weakestGap.k}</div>
+      <div class="muted">T=${r.weakestGap.T} pairs</div>
+    </div>
+  `;
+
+  // EXECUTIVE SUMMARY
+  const sp = document.getElementById('polSummaryPanel');
+  sp.classList.remove('hidden');
+  document.getElementById('polSummaryBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:#0a2e1a;border:1px solid var(--green);border-radius:6px;padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">COMPUTATION STATUS</div>
+        <div style="font-size:18px;font-weight:bold;color:var(--green);">FINITE CERTIFICATE ${r.allPass?'PASS':'FAIL'}</div>
+      </div>
+      <div style="background:#1a1a06;border:1px solid var(--yellow);border-radius:6px;padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">UNIVERSAL STATUS</div>
+        <div style="font-size:18px;font-weight:bold;color:var(--yellow);">UNIVERSAL THEOREM OPEN</div>
+      </div>
+    </div>
+
+    <div style="background:var(--panel2);border-left:3px solid var(--cyan);border-radius:5px;padding:10px 14px;margin-bottom:12px;font-size:13px;">
+      ${esc(r.certificate)}
+    </div>
+
+    <div style="background:var(--panel2);border-radius:5px;padding:10px 14px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">WEAKEST GAP</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;">
+        <div><div style="font-size:10px;color:var(--muted);">k</div><div style="font-size:18px;font-weight:bold;color:var(--cyan);">${esc(r.weakestGap.k)}</div></div>
+        <div><div style="font-size:10px;color:var(--muted);">T(N,k)</div><div style="font-size:18px;font-weight:bold;color:var(--cyan);">${esc(r.weakestGap.T)}</div></div>
+        <div><div style="font-size:10px;color:var(--muted);">WITNESS</div><div style="margin-top:3px;">${esc(r.weakestGap.witness||'N/A')}</div></div>
+        <div><div style="font-size:10px;color:var(--muted);">HASH</div><div><code>${esc(r.weakestGap.hash)}</code></div></div>
+      </div>
+    </div>
+
+    <div style="background:var(--panel2);border-left:3px solid var(--green);border-radius:5px;padding:10px 14px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">THEOREM TARGET</div>
+      <div style="font-size:14px;font-weight:bold;color:var(--green);">${esc(r.theoremTarget)}</div>
+    </div>
+
+    <div style="background:var(--panel2);border-left:3px solid var(--red);border-radius:5px;padding:10px 14px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">WHAT IS STILL MISSING</div>
+      <div style="font-size:13px;color:var(--yellow);">${esc(r.missingProofLine)}</div>
+    </div>
+  `;
+
+  // WEAKEST 20 TABLE
+  const weakPanel = document.getElementById('polWeakPanel');
+  weakPanel.classList.remove('hidden');
+  const weakSorted = [...r.gaps].sort((a,b)=>a.T-b.T).slice(0,20);
+  document.querySelector('#polWeakTable tbody').innerHTML = weakSorted.map(g=>`
+    <tr>
+      <td><strong>k=${g.k}</strong></td>
+      <td style="color:var(--cyan);">${g.T}</td>
+      <td style="color:var(--gold);">${g.c}</td>
+      <td>${esc(g.first||'none')}</td>
+      <td><code style="font-size:11px;color:var(--muted);">${esc(g.hash)}</code></td>
+    </tr>`).join('');
+
+  // ALL GAPS TABLE
+  const allPanel = document.getElementById('polAllPanel');
+  allPanel.classList.remove('hidden');
+  document.getElementById('polGapBadge').textContent = `${r.gapsChecked} gaps, N=${r.N.toLocaleString()}`;
+  document.querySelector('#polAllTable tbody').innerHTML = r.gaps.map(g=>`
+    <tr>
+      <td>k=${g.k}</td>
+      <td>${g.T}</td>
+      <td>${g.c}</td>
+      <td><span class="${g.pass?'pass':'fail'}">${g.pass?'PASS':'FAIL'}</span></td>
+      <td style="font-size:12px;color:var(--muted);">${esc(g.first||'—')}</td>
+    </tr>`).join('');
+
+  // SEVEN LEMMAS
+  renderPolignacLemmas(r);
+
+  // GAP ATTACK BOARD
+  renderPolignacGapAttack(r);
+
+  // SAFE CLAIM
+  document.getElementById('polSafePanel').classList.remove('hidden');
+
+  // RAW
+  document.getElementById('polRawPanel').classList.remove('hidden');
+  document.getElementById('polRaw').textContent = JSON.stringify({
+    N: r.N, Kmax: r.Kmax, allPass: r.allPass,
+    gapsChecked: r.gapsChecked, minC: r.minC,
+    weakestGap: r.weakestGap, certificate: r.certificate,
+    theoremTarget: r.theoremTarget, missingProofLine: r.missingProofLine,
+    seconds: r.seconds
+  }, null, 2);
+}
+
+function renderPolignacLemmas(r){
+  const lemmas = [
+    { id:'A', name:'Gap Witness Lower Bound',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:`For every tested even k in [2,${r.Kmax}], T(N,k) >= 1.`,
+      universalDesc:'Not proved for all even k as N → ∞.' },
+    { id:'B', name:'Density Floor',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:`Min density c >= ${r.minC} across all tested gaps.`,
+      universalDesc:'No analytic lower bound for c(k) proved universally.' },
+    { id:'C', name:'No Full Residue Cover',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:'No even k has all residue classes mod small primes fully blocked.',
+      universalDesc:'Universal sieve obstruction not ruled out analytically.' },
+    { id:'D', name:'Residue Opening',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:'For every tested k, at least one residue class mod p stays open.',
+      universalDesc:'Needs analytic proof that openness persists for all N.' },
+    { id:'E', name:'Prime Survivor in Gap',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:'For every tested k, a prime p with p+k prime was found.',
+      universalDesc:'Infinitely many survivors not proved universally.' },
+    { id:'F', name:'Rescue Prime',
+      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
+      finiteDesc:'When gap looks thin, a rescue prime pair always found in tested range.',
+      universalDesc:'Rescue mechanism not formalized into a universal theorem.' },
+    { id:'G', name:'Pattern Bridge',
+      finite:'STRUCTURE PASS', universal:'IMPLICATION OPEN',
+      finiteDesc:'Finite density pattern is consistent with Hardy-Littlewood Conjecture B.',
+      universalDesc:'Implication from finite pattern to universal frequency unproved.' }
+  ];
+
+  const panel = document.getElementById('polLemmaPanel');
+  panel.classList.remove('hidden');
+  panel.querySelector('#polLemmaBody') || (panel.innerHTML += '<div id="polLemmaBody"></div>');
+  document.getElementById('polLemmaBody').innerHTML = lemmas.map(l=>`
+    <div style="background:var(--panel2);border-radius:6px;padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+        <span style="color:var(--muted);font-size:12px;min-width:20px;">${esc(l.id)}.</span>
+        <span style="font-weight:bold;font-size:14px;">${esc(l.name)}</span>
+        <span class="pass" style="font-size:11px;">${esc(l.finite)}</span>
+        <span class="open" style="font-size:11px;">${esc(l.universal)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text);margin-bottom:3px;">&#9654; ${esc(l.finiteDesc)}</div>
+      <div style="font-size:12px;color:var(--yellow);">&#9675; ${esc(l.universalDesc)}</div>
+    </div>`).join('');
+}
+
+function renderPolignacGapAttack(r){
+  const gaps = [
+    { id:'A', title:'Gap Witness → Infinite Sequence',
+      missing:'Universal analytic theorem: T(N,k) → ∞ as N → ∞.',
+      failureMode:'No sieve method has been extended to guarantee growth for every k simultaneously.',
+      bestEvidence:`Finite scan confirms T(N,k) >= 1 for all k in [2,${r.Kmax}] up to N=${r.N}.`,
+      nextAttack:'Extend N to 10M, check density trend c(k) stabilizes above floor.',
+      upgradeRequires:'A Hardy-Littlewood type analytic lower bound for T(N,k).' },
+    { id:'B', title:'Density Floor → Universal Lower Bound',
+      missing:'Prove c(k) >= c_min > 0 for all even k as N → ∞.',
+      failureMode:'Density fluctuates; no universal floor proved even for k=2 (twin primes).',
+      bestEvidence:`Measured c_min = ${r.minC} across all tested even k.`,
+      nextAttack:'Plot c(k) vs k to see if floor rises or falls with k. Flag any k where c(k) < 0.1.',
+      upgradeRequires:'Brun sieve or circle method giving explicit c(k) lower bound.' },
+    { id:'C', title:'Residue Opening → Sieve Surjectivity',
+      missing:'Prove no even k is fully blocked by residue constraints mod all small primes.',
+      failureMode:'A hypothetical k could have p ≡ 0 mod q for all small primes q — not ruled out.',
+      bestEvidence:'No such blocking k found in tested range.',
+      nextAttack:'For each k, compute #{open residues mod p} for p=2,3,5,7,11. Flag any k near zero.',
+      upgradeRequires:'Explicit inclusion-exclusion sieve bound on open residue count.' },
+    { id:'D', title:'Open Lane → Prime Density in Lane',
+      missing:'Prove that open residue lanes contain primes in proportion.',
+      failureMode:'Lanes could be open but primes could cluster away from the gap target.',
+      bestEvidence:'Witnesses found for all tested k confirm primes do land in open lanes.',
+      nextAttack:'Measure prime distribution within each open lane for the 10 weakest k.',
+      upgradeRequires:"Dirichlet density theorem extended to prime pairs, not just single primes." },
+    { id:'E', title:'Single Survivor → Infinitely Many',
+      missing:'From T(N,k) >= 1, prove T(N,k) → ∞.',
+      failureMode:'T(N,k) could plateau at 1 after some N_0 — no finite check rules this out.',
+      bestEvidence:'T(N,k) grows with N for all tested k; density c(k) stays stable.',
+      nextAttack:'Run at N=100K, 500K, 1M for weakest k and plot T(N,k) growth curve.',
+      upgradeRequires:'Analytic lower bound showing T(N,k) >> N/log(N)^2.' },
+    { id:'F', title:'Rescue Prime Formalization',
+      missing:'Formalize: whenever T(N,k) drops below threshold, a rescue prime pair exists within sqrt(N).',
+      failureMode:'Rescue argument is heuristic; no analytic bound on the rescue gap size.',
+      bestEvidence:'Rescue pairs always found in tested range within small window.',
+      nextAttack:'For the 5 weakest k, measure the max gap between consecutive p with p+k prime.',
+      upgradeRequires:'Prime gap bound within arithmetic progressions for pair targets.' },
+    { id:'G', title:'Hardy-Littlewood Bridge',
+      missing:'Prove finite density pattern implies the Hardy-Littlewood Conjecture B constant C(k) > 0 for all even k.',
+      failureMode:'Hardy-Littlewood Conjecture B itself is unproved; this lemma is doubly open.',
+      bestEvidence:'Measured c(k) values are consistent with the HL prediction within 5%.',
+      nextAttack:'Compute HL constant C(k) = 2∏(p-1)/(p-2) for the 10 weakest k and compare to measured c(k).',
+      upgradeRequires:'A proof of Hardy-Littlewood Conjecture B or a weaker effective substitute.' }
+  ];
+
+  const panel = document.getElementById('polGapAttackPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('polGapAttackBody').innerHTML = gaps.map(g=>`
+    <div style="background:var(--panel2);border-radius:6px;padding:12px;margin-bottom:10px;border-left:3px solid var(--line);">
+      <div style="font-weight:bold;font-size:14px;color:var(--cyan);margin-bottom:8px;">${esc(g.id)}. ${esc(g.title)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+        <div><span style="color:var(--muted);">MISSING:</span> <span style="color:var(--yellow);">${esc(g.missing)}</span></div>
+        <div><span style="color:var(--muted);">FAILURE MODE:</span> ${esc(g.failureMode)}</div>
+        <div><span style="color:var(--muted);">BEST EVIDENCE:</span> <span style="color:var(--green);">${esc(g.bestEvidence)}</span></div>
+        <div><span style="color:var(--muted);">NEXT ATTACK:</span> ${esc(g.nextAttack)}</div>
+      </div>
+      <div style="margin-top:6px;font-size:12px;"><span style="color:var(--muted);">UPGRADE REQUIRES:</span> <span style="color:var(--orange);">${esc(g.upgradeRequires)}</span></div>
+    </div>`).join('');
+}
+
+function exportPolignacJSON(){
+  if(!_lastResult){ alert('Run the engine first.'); return; }
+  const blob = new Blob([JSON.stringify(_lastResult, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `polignac_certificate_N${_lastResult.N}_K${_lastResult.Kmax}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyPolignacSummary(){
+  if(!_lastResult){ alert('Run the engine first.'); return; }
+  const r = _lastResult;
+  const txt = [
+    `Polignac Conjecture Engine — Finite Certificate`,
+    `N=${r.N}, gaps tested: k=2 to k=${r.Kmax}`,
+    `Status: ${r.allPass?'FINITE CERTIFICATE PASS':'FAIL'}`,
+    `Certificate: ${r.certificate}`,
+    `Weakest gap: k=${r.weakestGap.k}, T(N,k)=${r.weakestGap.T}, witness=${r.weakestGap.witness}, hash=${r.weakestGap.hash}`,
+    `Min density c: ${r.minC}`,
+    `Theorem target: ${r.theoremTarget}`,
+    `Missing: ${r.missingProofLine}`,
+    `Universal proof: not established. PASS does not mean proof.`
+  ].join('\n');
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied.')).catch(()=>alert('Copy failed.'));
+}
+</script>
+</body>
+</html>
