@@ -1132,7 +1132,39 @@ The output is evidence, witness generation, and gap detection.</pre>
           There are exactly 53 primes &le; 241. Gates 3&ndash;5 of the Maynard Certificate remain open.
         </div>
 
-      <section id="attackLab" style="display:none;height:100%;overflow:auto;padding:14px;background:radial-gradient(circle at 8% 0%, rgba(126,231,255,.08), transparent 28%),linear-gradient(180deg,#071522,#030911);" aria-label="Prime Theory Attack Lab">
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- MAYNARD PROOF CERTIFICATE EXPLAINER                    -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <h2 class="section-title" style="margin-top:32px;">Maynard Proof Certificate Explainer</h2>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;line-height:1.7;">
+          Explains exactly why a diameter-240 admissible candidate is <em>not</em> enough to beat
+          H<sub>1</sub> &le; 246, and shows what a real Maynard proof certificate would require.
+          <strong style="color:var(--yellow);">MAYNARD CERTIFICATE MISSING / CANDIDATE READY / RECORD NOT BEATEN</strong>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
+          <button class="btn-gold" onclick="runMaynardProofCertificateExplainer()" style="background:#1a0830;border:1px solid #cc88ff;color:#cc88ff;">&#9654; Run Maynard Proof Certificate Explainer</button>
+          <button class="btn-gold" onclick="exportMaynardProofCertJson()" style="background:#1d1705;border:1px solid var(--gold);color:var(--gold);">&#128196; Export JSON</button>
+          <button class="btn-gold" onclick="exportMaynardProofCertMd()" style="background:#0d1f2d;border:1px solid var(--cyan);color:var(--cyan);">&#128196; Export .md</button>
+        </div>
+        <!-- Toy simulation controls -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;padding:10px 12px;background:#060e18;border:1px solid #1a4060;border-radius:8px;">
+          <label style="font-size:12px;color:var(--muted);">toy N:</label>
+          <input id="mpceToyN" type="number" value="100000" min="1000" max="10000000" step="1000"
+            style="width:90px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
+          <label style="font-size:12px;color:var(--muted);">sample shifts:</label>
+          <input id="mpceSampleShifts" type="number" value="2000" min="100" max="100000" step="100"
+            style="width:80px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
+          <label style="font-size:12px;color:var(--muted);">&ge;2-prime threshold:</label>
+          <input id="mpceThreshold" type="number" value="2" min="2" max="10" step="1"
+            style="width:55px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
+          <button class="btn-gold" onclick="runToySieveWeightSimulation()" style="background:#082010;border:1px solid var(--green);color:var(--green);">&#9654; Run Toy Weight Simulation</button>
+        </div>
+        <div id="maynardProofCertOut"></div>
+        <!-- static honesty for self-test scan -->
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">
+          TOY FINITE SIMULATION ONLY / NOT MAYNARD PROOF.
+          Current honest claim: certified admissible below-246 candidate; record not beaten.
+        </div> style="display:none;height:100%;overflow:auto;padding:14px;background:radial-gradient(circle at 8% 0%, rgba(126,231,255,.08), transparent 28%),linear-gradient(180deg,#071522,#030911);" aria-label="Prime Theory Attack Lab">
         <h2 class="section-title" style="margin-top:4px;color:#cc88ff;">PRIME THEORY ATTACK LAB</h2>
         <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">
           Create, test, attack, and falsify visual/theory claims about prime gaps, mod-wheel lanes, density, dead zones, and repeated gap sequences.
@@ -14103,6 +14135,13 @@ function _selfTest(){
   checkTrue('fn: runBoundedGap246Attack',      typeof runBoundedGap246Attack==='function');
   checkTrue('fn: gap246Admissibility',         typeof gap246Admissibility==='function');
   checkTrue('fn: sieve',                       typeof sieve==='function');
+  checkTrue('fn: runMaynardProofCertificateExplainer', typeof runMaynardProofCertificateExplainer==='function');
+  checkTrue('fn: runToySieveWeightSimulation', typeof runToySieveWeightSimulation==='function');
+  checkTrue('fn: exportMaynardProofCertJson',  typeof exportMaynardProofCertJson==='function');
+  checkTrue('fn: exportMaynardProofCertMd',    typeof exportMaynardProofCertMd==='function');
+  checkTrue('DOM: #maynardProofCertOut exists',!!document.getElementById('maynardProofCertOut'));
+  checkTrue('DOM: #mpceSampleShifts exists',   !!document.getElementById('mpceSampleShifts'));
+  checkTrue('DOM: #mpceThreshold exists',      !!document.getElementById('mpceThreshold'));
 
   // ── LIVE DATA CHECK (warn, not fail, if engine not yet run) ──────
   const gd = window._boundedGap246Data;
@@ -14166,6 +14205,319 @@ function _selfTest(){
 
   return { verdict, passed: passCount, warned: warnCount, failed: failCount, total,
            failNames: results.filter(r=>r.tier==='fail').map(r=>r.name) };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MAYNARD PROOF CERTIFICATE EXPLAINER
+// ═══════════════════════════════════════════════════════════════════
+
+window._maynardProofCertData = null;
+
+function runMaynardProofCertificateExplainer(){
+  const out = document.getElementById('maynardProofCertOut');
+  out.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;">Building Maynard Proof Certificate Explainer…</div>';
+  setTimeout(() => {
+    const gd   = window._boundedGap246Data || {};
+    const tuple= gd.tuple && gd.tuple.length ? gd.tuple.slice().sort((a,b)=>a-b) : null;
+    const diam = tuple ? tuple[tuple.length-1] - tuple[0] : null;
+    const adm  = gd.admissible  !== undefined ? gd.admissible  : null;
+    const hq   = gd.highestPrimeChecked !== undefined ? gd.highestPrimeChecked : null;
+
+    // ── Gate evaluation ─────────────────────────────────────────────
+    const gate1Pass = diam !== null && diam < 246;
+    const gate2Pass = adm === true && hq !== null && hq >= 241;
+    const gates = [
+      { id:1, name:'Diameter < 246',
+        desc:'The candidate tuple must span fewer than 246 integers.',
+        detail: diam !== null ? 'Diameter = '+diam : 'No tuple loaded.',
+        pass: gate1Pass, tier: gate1Pass ? 'PASS' : (diam === null ? 'UNKNOWN' : 'FAIL') },
+      { id:2, name:'Admissible tuple (q ≤ 241)',
+        desc:'For every prime q ≤ 241, the tuple does not occupy all residues mod q.',
+        detail: adm === true ? 'Admissible. Highest q checked: '+(hq||'?')
+               : adm === false ? 'NOT admissible.'
+               : 'Run Full q≤241 Certificate first.',
+        pass: gate2Pass, tier: gate2Pass ? 'PASS' : (adm === null ? 'UNKNOWN' : 'FAIL') },
+      { id:3, name:'Optimized Maynard sieve weights',
+        desc:'Select weight functions w(n) to maximize the weighted sum S(H) − \u03c1·S\u2080(H).',
+        detail: 'Not implemented. Requires analytic number theory beyond finite computation.',
+        pass: false, tier: 'OPEN' },
+      { id:4, name:'Analytic inequality proves ≥2 primes',
+        desc:'Prove S(H) > \u03c1·S\u2080(H) using distribution estimates (Bombieri–Vinogradov etc.).',
+        detail: 'Not proved. This is the core unsolved step for any new record.',
+        pass: false, tier: 'OPEN' },
+      { id:5, name:'Infinite conclusion allowed',
+        desc:'Conclude infinitely many n exist such that [n+H] contains ≥2 primes.',
+        detail: 'Blocked until Gates 3 and 4 are closed.',
+        pass: false, tier: gate1Pass && gate2Pass ? 'OPEN' : 'OPEN' },
+    ];
+
+    const tierCol  = t => t==='PASS'?'var(--green)':t==='FAIL'?'var(--red)':'var(--yellow)';
+    const tierBg   = t => t==='PASS'?'#0a2e1a':t==='FAIL'?'#1a0808':'#1a1200';
+    const tierBord = t => t==='PASS'?'var(--green)':t==='FAIL'?'var(--red)':'#886600';
+
+    const gateRows = gates.map(g => `
+      <div class="maynard-proof-cert-gate" style="background:${tierBg(g.tier)};border:1px solid ${tierBord(g.tier)};border-radius:6px;padding:10px 14px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-weight:bold;color:var(--text);font-size:13px;">Gate ${g.id}: ${esc(g.name)}</span>
+          <span style="font-size:11px;font-weight:bold;color:${tierCol(g.tier)};background:#020812;padding:2px 8px;border-radius:10px;border:1px solid ${tierBord(g.tier)}">${g.tier}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">${esc(g.desc)}</div>
+        <div style="font-size:11px;color:var(--cyan);margin-top:3px;">${esc(g.detail)}</div>
+      </div>`).join('');
+
+    const overallGate = gate1Pass && gate2Pass ? 'GATES 1–2 PASS — GATES 3–5 OPEN'
+                                               : 'GATES INCOMPLETE — RUN 246 ATTACK + q≤241 CERT';
+    const overallCol  = gate1Pass && gate2Pass ? 'var(--yellow)' : 'var(--red)';
+
+    // ── Panel 3: toy simulation placeholder (will be filled by runToySieveWeightSimulation) ──
+    const toyHtml = window._mpceToyResult
+      ? _renderToySimResult(window._mpceToyResult)
+      : '<div class="maynard-proof-cert-panel" style="border-color:#1a4060;"><div style="color:var(--muted);font-size:12px;">No toy simulation run yet. Use the controls above and click “Run Toy Weight Simulation”.</div></div>';
+
+    // ── Build full output ───────────────────────────────────────────────────
+    out.innerHTML = `
+    <style>
+      .maynard-proof-cert-panel{background:#020812;border:1px solid #1a4060;border-radius:8px;padding:14px;margin-bottom:12px;}
+      .maynard-proof-cert-title{font-size:13px;font-weight:bold;color:#cc88ff;margin-bottom:10px;letter-spacing:.05em;}
+      .maynard-proof-cert-stat{display:inline-block;background:#060e18;border:1px solid var(--line);border-radius:6px;padding:6px 12px;margin:3px;}
+      .maynard-proof-cert-kv{font-size:10px;color:var(--muted);}
+      .maynard-proof-cert-val{font-size:16px;font-weight:bold;color:var(--cyan);}
+      .maynard-proof-cert-farmer-row{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;}
+      .maynard-proof-cert-farmer-label{font-size:11px;font-weight:bold;color:var(--purple);min-width:170px;}
+      .maynard-proof-cert-farmer-val{font-size:11px;color:var(--muted);}
+      .maynard-proof-cert-missing{background:#1a0808;border:1px solid var(--red);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:8px;}
+    </style>
+
+    <!-- PANEL 1: CURRENT STATUS -->
+    <div class="maynard-proof-cert-panel">
+      <div class="maynard-proof-cert-title">■ PANEL 1 — CURRENT STATUS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div class="maynard-proof-cert-stat">
+          <div class="maynard-proof-cert-kv">Tuple diameter</div>
+          <div class="maynard-proof-cert-val">${diam !== null ? diam : '—'}</div>
+        </div>
+        <div class="maynard-proof-cert-stat">
+          <div class="maynard-proof-cert-kv">Tuple length</div>
+          <div class="maynard-proof-cert-val">${tuple ? tuple.length : '—'}</div>
+        </div>
+        <div class="maynard-proof-cert-stat">
+          <div class="maynard-proof-cert-kv">Admissible</div>
+          <div class="maynard-proof-cert-val" style="color:${adm===true?'var(--green)':adm===false?'var(--red)':'var(--yellow)'}">${adm===true?'YES':adm===false?'NO':'UNKNOWN'}</div>
+        </div>
+        <div class="maynard-proof-cert-stat">
+          <div class="maynard-proof-cert-kv">Highest q checked</div>
+          <div class="maynard-proof-cert-val">${hq !== null ? hq : '—'}</div>
+        </div>
+        <div class="maynard-proof-cert-stat">
+          <div class="maynard-proof-cert-kv">Record target</div>
+          <div class="maynard-proof-cert-val" style="color:var(--orange);">H₁ ≤ 246</div>
+        </div>
+      </div>
+      <div style="background:#0a1a2e;border:1px solid var(--cyan);border-radius:5px;padding:8px 12px;font-size:12px;font-weight:bold;color:var(--cyan);">
+        ${diam !== null && diam < 246 ? 'DIAMETER-'+diam+' ADMISSIBLE CANDIDATE READY / RECORD NOT BEATEN' : 'NO CANDIDATE LOADED — RUN 246 ATTACK FIRST'}
+      </div>
+    </div>
+
+    <!-- PANEL 2: THE 5 GATES -->
+    <div class="maynard-proof-cert-panel">
+      <div class="maynard-proof-cert-title">■ PANEL 2 — THE 5 GATES</div>
+      ${gateRows}
+      <div style="text-align:center;font-size:12px;font-weight:bold;color:${overallCol};margin-top:6px;padding:6px;background:#020812;border-radius:5px;">${overallGate}</div>
+    </div>
+
+    <!-- PANEL 3: TOY SIEVE WEIGHT SIMULATOR -->
+    <div class="maynard-proof-cert-panel">
+      <div class="maynard-proof-cert-title">■ PANEL 3 — TOY SIEVE WEIGHT SIMULATOR</div>
+      <div style="font-size:11px;color:var(--yellow);margin-bottom:8px;padding:5px 10px;background:#1a1200;border:1px solid #886600;border-radius:5px;">
+        <strong>TOY FINITE SIMULATION ONLY / NOT MAYNARD PROOF.</strong>
+        This scans finite shifts and counts how often the tuple contains ≥2 primes. It cannot prove the infinite theorem.
+      </div>
+      ${toyHtml}
+    </div>
+
+    <!-- PANEL 4: HARD MISSING THEOREM -->
+    <div class="maynard-proof-cert-panel">
+      <div class="maynard-proof-cert-title">■ PANEL 4 — HARD MISSING THEOREM</div>
+      <div class="maynard-proof-cert-missing">
+        <strong>To beat H₁ ≤ 246 with this tuple, one must prove a Maynard/Polymath-style weighted sieve
+        inequality strong enough to force at least two primes inside some translate of the tuple infinitely often.</strong>
+      </div>
+      <table class="math-table" style="width:100%;font-size:11px;">
+        <thead><tr><th>Approach</th><th>Can it prove the infinite theorem?</th></tr></thead>
+        <tbody>
+          <tr><td>Finite shift scanning</td><td style="color:var(--red);">NO — finite evidence only</td></tr>
+          <tr><td>Admissibility certificate</td><td style="color:var(--red);">NO — necessary but not sufficient</td></tr>
+          <tr><td>Random baseline comparison</td><td style="color:var(--red);">NO — not a proof mechanism</td></tr>
+          <tr><td>Analytic inequality + distribution estimates</td><td style="color:var(--green);">YES — this is what Maynard/Zhang proved for H₁ ≤ 246</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PANEL 5: DAVID FARMER VIEW -->
+    <div class="maynard-proof-cert-panel">
+      <div class="maynard-proof-cert-title">■ PANEL 5 — DAVID FARMER VIEW</div>
+      <div class="maynard-proof-cert-farmer-row">
+        <div class="maynard-proof-cert-farmer-label">Proven/rigorous inside app:</div>
+        <div class="maynard-proof-cert-farmer-val">q≤241 admissibility certificate; no local residue obstruction for tuple</div>
+      </div>
+      <div class="maynard-proof-cert-farmer-row">
+        <div class="maynard-proof-cert-farmer-label">Finite evidence:</div>
+        <div class="maynard-proof-cert-farmer-val">ladder scans; weakest-k runs; dead-zone scaling; toy sieve simulation</div>
+      </div>
+      <div class="maynard-proof-cert-farmer-row">
+        <div class="maynard-proof-cert-farmer-label">Missing:</div>
+        <div class="maynard-proof-cert-farmer-val" style="color:var(--red);">optimized sieve weights; analytic inequality; infinite conclusion</div>
+      </div>
+      <div class="maynard-proof-cert-farmer-row">
+        <div class="maynard-proof-cert-farmer-label">Current honest claim:</div>
+        <div class="maynard-proof-cert-farmer-val" style="color:var(--cyan);">certified admissible below-246 candidate; record not beaten</div>
+      </div>
+    </div>
+
+    <!-- final label -->
+    <div style="text-align:center;font-size:12px;font-weight:bold;color:var(--yellow);padding:8px;background:#1a1200;border:1px solid #886600;border-radius:6px;margin-top:4px;">
+      MAYNARD CERTIFICATE MISSING / CANDIDATE READY / RECORD NOT BEATEN
+    </div>
+    `;
+
+    // store result for export
+    window._maynardProofCertData = {
+      engine:'MAYNARD_PROOF_CERTIFICATE_EXPLAINER',
+      timestamp: new Date().toISOString(),
+      tuple: tuple || [],
+      diameter: diam,
+      admissible: adm,
+      highestPrimeChecked: hq,
+      gates: gates.map(g => ({ id:g.id, name:g.name, tier:g.tier })),
+      toySimulationLastRun: window._mpceToyResult || null,
+      missingTheorem: 'To beat H1 <= 246, prove a Maynard/Polymath-style weighted sieve inequality strong enough to force >= 2 primes inside some translate of the tuple infinitely often.',
+      finalLabel: 'MAYNARD CERTIFICATE MISSING / CANDIDATE READY / RECORD NOT BEATEN',
+      proofStatus:{ candidate:'READY', recordBeat:false, maynardCertificate:'MISSING', universalProof:'OPEN' },
+    };
+    const h = typeof simpleHash==='function' ? simpleHash(JSON.stringify(window._maynardProofCertData)) : maynardProofCertSimpleHash(JSON.stringify(window._maynardProofCertData));
+    window._maynardProofCertData.hash = h;
+
+  }, 0);
+}
+
+function _renderToySimResult(r){
+  if(!r) return '';
+  const hitRate = r.sampleShifts > 0 ? ((r.hits / r.sampleShifts)*100).toFixed(2) : '0.00';
+  const firstHits = r.hitShifts.slice(0,10).join(', ');
+  return `
+    <div class="maynard-proof-cert-stat" style="display:block;width:100%;margin:0;">
+      <table class="math-table" style="width:100%;font-size:11px;">
+        <tbody>
+          <tr><td>Sample shifts tested</td><td style="color:var(--cyan);font-weight:bold;">${r.sampleShifts}</td></tr>
+          <tr><td>Tuple length</td><td style="color:var(--cyan);">${r.tupleLength}</td></tr>
+          <tr><td>Prime-count threshold</td><td style="color:var(--cyan);">\u2265 ${r.threshold}</td></tr>
+          <tr><td>Shifts with ≥2 primes</td><td style="color:var(--green);font-weight:bold;">${r.hits}</td></tr>
+          <tr><td>Best shift</td><td style="color:var(--gold);">${r.bestShift}</td></tr>
+          <tr><td>Best prime count</td><td style="color:var(--gold);">${r.bestPrimeCount}</td></tr>
+          <tr><td>First 10 hit shifts</td><td style="color:var(--muted);font-size:10px;">${firstHits||'—'}</td></tr>
+          <tr><td>Finite hit rate</td><td style="color:var(--cyan);">${hitRate}%</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:10px;color:var(--yellow);margin-top:6px;">TOY FINITE SIMULATION ONLY / NOT MAYNARD PROOF</div>
+    </div>`;
+}
+
+function runToySieveWeightSimulation(){
+  const out = document.getElementById('maynardProofCertOut');
+  const gd  = window._boundedGap246Data || {};
+  const tuple = gd.tuple && gd.tuple.length ? gd.tuple.slice().sort((a,b)=>a-b) : null;
+  if(!tuple){
+    alert('Run 246 Attack first to generate a tuple.');
+    return;
+  }
+  const sampleShifts = parseInt(document.getElementById('mpceSampleShifts').value)||2000;
+  const threshold    = parseInt(document.getElementById('mpceThreshold').value)||2;
+
+  // Run chunked so UI does not freeze
+  let x = 1, hits = 0, hitShifts = [], bestShift = null, bestPrimeCount = 0;
+  const primeCache = {};
+  function isPrime(n){
+    if(n<2) return false;
+    if(primeCache[n] !== undefined) return primeCache[n];
+    if(n===2) return (primeCache[n]=true);
+    if(n%2===0) return (primeCache[n]=false);
+    for(let i=3;i*i<=n;i+=2) if(n%i===0) return (primeCache[n]=false);
+    return (primeCache[n]=true);
+  }
+  function step(){
+    const end = Math.min(x + 200, sampleShifts + 1);
+    for(;x<end;x++){
+      let count=0;
+      for(const h of tuple) if(isPrime(x+h)) count++;
+      if(count >= threshold){ hits++; hitShifts.push(x); }
+      if(count > bestPrimeCount){ bestPrimeCount=count; bestShift=x; }
+    }
+    if(x <= sampleShifts){
+      setTimeout(step, 0);
+    } else {
+      window._mpceToyResult = { sampleShifts, tupleLength:tuple.length, threshold,
+        hits, hitShifts: hitShifts.slice(0,50), bestShift, bestPrimeCount,
+        timestamp: new Date().toISOString() };
+      // re-render the explainer with fresh toy data
+      runMaynardProofCertificateExplainer();
+    }
+  }
+  step();
+}
+
+function maynardProofCertSimpleHash(str){
+  let h = 5381;
+  for(let i=0;i<str.length;i++) h = ((h<<5)+h)+str.charCodeAt(i);
+  return (h>>>0).toString(16);
+}
+
+function exportMaynardProofCertJson(){
+  const d = window._maynardProofCertData;
+  if(!d){ alert('Run the Maynard Proof Certificate Explainer first.'); return; }
+  const blob = new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'maynard_proof_cert_explainer_'+d.timestamp.slice(0,10)+'.json';
+  a.click();
+}
+
+function exportMaynardProofCertMd(){
+  const d = window._maynardProofCertData;
+  if(!d){ alert('Run the Maynard Proof Certificate Explainer first.'); return; }
+  const gates = d.gates.map(g=>`| ${g.id} | ${g.name} | ${g.tier} |`).join('\n');
+  const md = [
+    '# Maynard Proof Certificate Explainer',
+    '',
+    `**Engine:** ${d.engine}`,
+    `**Timestamp:** ${d.timestamp}`,
+    `**Tuple length:** ${d.tuple.length}`,
+    `**Diameter:** ${d.diameter}`,
+    `**Admissible:** ${d.admissible}`,
+    `**Highest q checked:** ${d.highestPrimeChecked}`,
+    '',
+    '## Gates',
+    '| Gate | Name | Status |',
+    '|---|---|---|',
+    gates,
+    '',
+    '## Missing Theorem',
+    d.missingTheorem,
+    '',
+    '## Proof Status',
+    `- Candidate: ${d.proofStatus.candidate}`,
+    `- Record beaten: ${d.proofStatus.recordBeat}`,
+    `- Maynard certificate: ${d.proofStatus.maynardCertificate}`,
+    `- Universal proof: ${d.proofStatus.universalProof}`,
+    '',
+    `**${d.finalLabel}**`,
+    '',
+    `Hash: ${d.hash}`,
+  ].join('\n');
+  const blob = new Blob([md],{type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'maynard_proof_cert_explainer_'+d.timestamp.slice(0,10)+'.md';
+  a.click();
 }
 
 // Run self-tests after DOM is ready, non-blocking

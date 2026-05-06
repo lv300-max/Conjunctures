@@ -160,6 +160,32 @@ check('source patches highestPrimeChecked',
 check('source patches admissible = ',
   src.includes('window._boundedGap246Data.admissible'), true);
 
+// Maynard Proof Certificate Explainer
+[
+  'function runMaynardProofCertificateExplainer(',
+  'function runToySieveWeightSimulation(',
+  'function exportMaynardProofCertJson(',
+  'function exportMaynardProofCertMd(',
+  'function maynardProofCertSimpleHash(',
+  'id="maynardProofCertOut"',
+  'id="mpceSampleShifts"',
+  'id="mpceThreshold"',
+  'id="mpceToyN"',
+  'runMaynardProofCertificateExplainer()',
+  'runToySieveWeightSimulation()',
+  'MAYNARD CERTIFICATE MISSING',
+  'TOY FINITE SIMULATION ONLY',
+].forEach(s => check('HTML/src contains: '+s, src.includes(s), true));
+
+// Panel 5 David Farmer view strings must be in HTML (outside scripts)
+[
+  'certified admissible below-246 candidate',
+  'record not beaten',
+].forEach(s => {
+  if(htmlOnlyLC.includes(s.toLowerCase())) pass('Panel5 string present: "'+s+'"');
+  else warn('Panel5 string not in HTML: "'+s+'"');
+});
+
 // ══ TALLY ════════════════════════════════════════════════════════
 const total   = passCount+warnCount+failCount;
 const verdict = failCount>0?'FAIL':warnCount>0?'PASS WITH WARNINGS':'PASS';
