@@ -723,6 +723,25 @@ The output is evidence, witness generation, and gap detection.</pre>
         <div id="pianoGrid"></div>
         <div id="pianoReport"></div>
         <div id="pianoOctave"></div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- COMPARE SWATCH STRIPS                                  -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <h2 class="section-title" style="margin-top:28px;">Compare Swatch Strips</h2>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">
+          Side-by-side analysis of three consecutive 1000-number strips.
+          Compare gap patterns, dead zones, and mod&nbsp;30 lane positions.
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
+          <label style="font-size:13px;">Strip size:</label>
+          <input id="swatchStripSize" type="number" value="1000" min="100" max="3000"
+            style="width:90px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">Start A:</label>
+          <input id="swatchStripStart" type="number" value="1" min="1"
+            style="width:90px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <button class="btn-gold" onclick="runSwatchStripCompare()">&#9654; Compare Swatch Strips</button>
+        </div>
+        <div id="swatchStripOut"></div>
       </section>
 
       <iframe id="five" src="five_conjecture_workbench.html" title="ANY-N Five Conjecture Workbench"></iframe>
@@ -9354,6 +9373,222 @@ function exportPianoSwatch(){
   a.href    = URL.createObjectURL(new Blob([txt], { type:'text/plain' }));
   a.download = `prime_piano_swatch_${startN}_${startN+rangeN-1}.txt`;
   a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// COMPARE SWATCH STRIPS
+// ═══════════════════════════════════════════════════════════════════
+function runSwatchStripCompare(){
+  const stripSize = Math.max(100, Math.min(Number(document.getElementById('swatchStripSize').value)||1000, 3000));
+  const startA    = Math.max(1, Number(document.getElementById('swatchStripStart').value)||1);
+  const startB    = startA + stripSize;
+  const startC    = startA + 2 * stripSize;
+  const outEl     = document.getElementById('swatchStripOut');
+  outEl.innerHTML = '<div style="color:var(--muted);font-size:12px;">Computing strips…</div>';
+
+  setTimeout(() => {
+    const MOD    = 30;
+    const endAll = startC + stripSize + 10;
+    const pSet   = new Set(sieve(endAll));
+
+    // ── Build strip analysis ──────────────────────────────────────────
+    function analyseStrip(s, len){
+      const primes = [], composites = [];
+      for(let n = s; n < s + len; n++){
+        if(n > 1 && pSet.has(n)) primes.push(n); else composites.push(n);
+      }
+
+      // Gaps between consecutive primes
+      const gaps = [];
+      for(let i = 1; i < primes.length; i++) gaps.push(primes[i] - primes[i-1]);
+
+      // Gap frequency
+      const gapFreq = {};
+      gaps.forEach(g => gapFreq[g] = (gapFreq[g]||0) + 1);
+      const gapEntries = Object.entries(gapFreq).sort((a,b) => b[1]-a[1]);
+      const mostCommon = gapEntries[0] ? { gap: Number(gapEntries[0][0]), cnt: gapEntries[0][1] } : null;
+      const largest    = gaps.length ? Math.max(...gaps) : 0;
+
+      // Dead zones: maximal runs of composites
+      const deadZones = [];
+      let dzStart = null, dzLen = 0;
+      for(let n = s; n < s + len; n++){
+        if(!pSet.has(n) || n === 1){
+          if(dzStart === null) dzStart = n;
+          dzLen++;
+        } else {
+          if(dzLen >= 4) deadZones.push({ start: dzStart, len: dzLen });
+          dzStart = null; dzLen = 0;
+        }
+      }
+      if(dzLen >= 4) deadZones.push({ start: dzStart, len: dzLen });
+      deadZones.sort((a,b) => b.len - a.len);
+
+      // Repeated gap sequences (length-3 runs)
+      const seqFreq = {};
+      for(let i = 0; i <= gaps.length - 3; i++){
+        const key = gaps.slice(i, i+3).join('-');
+        seqFreq[key] = (seqFreq[key]||0) + 1;
+      }
+      const topSeqs = Object.entries(seqFreq).filter(([,c]) => c > 1)
+        .sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+      // Mod 30 lane positions of primes
+      const laneCounts = {};
+      primes.forEach(p => {
+        const lane = p % MOD;
+        laneCounts[lane] = (laneCounts[lane]||0) + 1;
+      });
+
+      return { s, len, primes, gaps, gapFreq, gapEntries, mostCommon, largest,
+               deadZones, topSeqs, laneCounts, density: primes.length / len };
+    }
+
+    const strips = [
+      { label: 'A', ...analyseStrip(startA, stripSize) },
+      { label: 'B', ...analyseStrip(startB, stripSize) },
+      { label: 'C', ...analyseStrip(startC, stripSize) },
+    ];
+
+    // ── Shared repeated gap sequences across all 3 strips ────────────
+    function seqsOfStrip(st){
+      const s = new Set();
+      const g = st.gaps;
+      for(let i = 0; i <= g.length - 3; i++) s.add(g.slice(i,i+3).join('-'));
+      return s;
+    }
+    const seqSets   = strips.map(seqsOfStrip);
+    const sharedAll = [...seqSets[0]].filter(k => seqSets[1].has(k) && seqSets[2].has(k));
+    const sharedAB  = [...seqSets[0]].filter(k => seqSets[1].has(k));
+    const sharedBC  = [...seqSets[1]].filter(k => seqSets[2].has(k));
+
+    // ── Render helpers ────────────────────────────────────────────────
+    const COL = ['var(--cyan)', 'var(--gold)', '#cc88ff'];
+    function statCard(label, val, col){
+      return `<div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px 10px;">
+        <div style="font-size:10px;color:var(--muted);">${label}</div>
+        <div style="font-size:16px;font-weight:bold;color:${col||'var(--cyan)'}">${esc(val)}</div>
+      </div>`;
+    }
+
+    function barChart(entries, hlGap, col){
+      const maxF = entries[0] ? entries[0][1] : 1;
+      return entries.slice(0,12).map(([g,cnt]) => {
+        const w = Math.round(cnt/maxF*100);
+        const isHL = hlGap && Number(g) === hlGap;
+        return `<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
+          <div style="min-width:38px;font-size:10px;color:${isHL?'var(--gold)':'var(--muted)'};text-align:right;">g${g}</div>
+          <div style="flex:1;background:#0a0a14;border-radius:2px;height:10px;">
+            <div style="width:${w}%;height:100%;background:${col};opacity:.8;border-radius:2px;"></div>
+          </div>
+          <div style="min-width:28px;font-size:10px;color:var(--text);">${cnt}×</div>
+        </div>`;
+      }).join('');
+    }
+
+    function laneTable(laneCounts){
+      // known survivor lanes mod 30 (coprime to 30)
+      const survivors = new Set([1,7,11,13,17,19,23,29]);
+      const rows = Object.entries(laneCounts).sort((a,b)=>Number(a[0])-Number(b[0]))
+        .map(([lane,cnt]) => {
+          const isSurv = survivors.has(Number(lane));
+          return `<tr>
+            <td style="color:${isSurv?'#9966dd':'var(--muted)'};">lane ${lane}</td>
+            <td style="color:${isSurv?'#9966dd':'var(--muted)'};">mod30=${lane}</td>
+            <td style="color:var(--cyan);">${cnt}</td>
+            <td><span style="font-size:10px;color:${isSurv?'#9966dd':'#333'};">${isSurv?'survivor':'blocked'}</span></td>
+          </tr>`;
+        }).join('');
+      return `<table class="math-table" style="width:100%;font-size:11px;">
+        <thead><tr><th>Lane</th><th>Residue</th><th>Primes</th><th>Wheel</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+    }
+
+    // ── Build HTML ────────────────────────────────────────────────────
+    const stripPanels = strips.map((st, idx) => `
+      <div style="background:var(--panel2);border:1px solid ${COL[idx]};border-radius:8px;padding:14px;min-width:280px;flex:1;">
+        <div style="font-size:13px;font-weight:bold;color:${COL[idx]};letter-spacing:1px;margin-bottom:10px;">
+          STRIP ${st.label} &nbsp;<span style="font-weight:normal;font-size:11px;color:var(--muted);">${st.s.toLocaleString()} – ${(st.s+st.len-1).toLocaleString()}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+          ${statCard('Primes found',   st.primes.length, COL[idx])}
+          ${statCard('Density',        st.density.toFixed(4), COL[idx])}
+          ${statCard('Gaps counted',   st.gaps.length, COL[idx])}
+          ${statCard('Largest gap',    st.largest, COL[idx])}
+          ${statCard('Most common',    st.mostCommon ? 'gap '+st.mostCommon.gap+' ('+st.mostCommon.cnt+'×)' : '—', COL[idx])}
+          ${statCard('Dead zones ≥4',  st.deadZones.length, COL[idx])}
+        </div>
+
+        <!-- Gap bar chart -->
+        <div style="background:#020812;border:1px solid var(--line);border-radius:5px;padding:8px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">GAP FREQUENCY</div>
+          ${barChart(st.gapEntries.sort((a,b)=>Number(a[0])-Number(b[0])), null, COL[idx])}
+        </div>
+
+        <!-- Top dead zones -->
+        <div style="background:#020812;border:1px solid var(--line);border-radius:5px;padding:8px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">TOP DEAD ZONES</div>
+          ${st.deadZones.slice(0,5).map(dz =>
+            `<div style="font-size:11px;color:#cc2244;margin-bottom:2px;">start ${dz.start}, length ${dz.len}</div>`
+          ).join('') || '<div style="font-size:11px;color:var(--muted);">None ≥ 4</div>'}
+        </div>
+
+        <!-- Top repeated sequences -->
+        <div style="background:#020812;border:1px solid var(--line);border-radius:5px;padding:8px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">REPEATED GAP SEQUENCES (len 3)</div>
+          ${st.topSeqs.map(([seq,cnt]) =>
+            `<div style="font-size:11px;color:var(--text);margin-bottom:2px;">${esc(seq)} &nbsp;<span style="color:var(--muted);">${cnt}×</span></div>`
+          ).join('') || '<div style="font-size:11px;color:var(--muted);">None repeated</div>'}
+        </div>
+
+        <!-- Mod 30 lane table -->
+        <div style="background:#020812;border:1px solid var(--line);border-radius:5px;padding:8px;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">MOD 30 LANE POSITIONS</div>
+          ${laneTable(st.laneCounts)}
+        </div>
+      </div>
+    `).join('');
+
+    // ── Cross-strip comparison ────────────────────────────────────────
+    const crossPanel = `
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">CROSS-STRIP COMPARISON</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:12px;">
+          ${statCard('Shared seqs A∩B',  sharedAB.length,  'var(--cyan)')}
+          ${statCard('Shared seqs B∩C',  sharedBC.length,  'var(--cyan)')}
+          ${statCard('Shared seqs A∩B∩C',sharedAll.length, 'var(--gold)')}
+          ${statCard('Strip A primes',   strips[0].primes.length, COL[0])}
+          ${statCard('Strip B primes',   strips[1].primes.length, COL[1])}
+          ${statCard('Strip C primes',   strips[2].primes.length, COL[2])}
+          ${statCard('Largest gap A',    strips[0].largest, COL[0])}
+          ${statCard('Largest gap B',    strips[1].largest, COL[1])}
+          ${statCard('Largest gap C',    strips[2].largest, COL[2])}
+        </div>
+
+        ${sharedAll.length > 0 ? `
+        <div style="background:#020812;border:1px solid var(--line);border-radius:5px;padding:10px;margin-bottom:10px;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">GAP SEQUENCES SHARED BY ALL THREE STRIPS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${sharedAll.slice(0,20).map(s =>
+              `<span style="background:#051a2e;border:1px solid var(--gold);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--gold);">${esc(s)}</span>`
+            ).join('')}
+            ${sharedAll.length > 20 ? `<span style="color:var(--muted);font-size:11px;">+${sharedAll.length-20} more</span>` : ''}
+          </div>
+        </div>` : ''}
+
+        <div style="background:#060e18;border-left:3px solid var(--cyan);border-radius:4px;padding:8px 12px;font-size:12px;color:var(--muted);line-height:1.8;">
+          Shared gap sequences reflect the additive structure of primes mod small numbers, not a periodic law.
+          Mod 30 lane survival is structural (all primes &gt; 5 must land on a coprime residue mod 30).
+          This is a visual and statistical comparison only — not a proof of any conjecture.
+        </div>
+      </div>
+    `;
+
+    outEl.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:4px;">${stripPanels}</div>
+      ${crossPanel}
+    `;
+  }, 0);
 }
 
 _renders.forEach((fn, i) => setTimeout(fn, i * 50));
