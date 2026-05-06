@@ -1125,7 +1125,12 @@ The output is evidence, witness generation, and gap detection.</pre>
           <button class="btn-gold" style="background:#0d1f2d;border:1px solid var(--gold);color:var(--gold);" onclick="exportMaynardCertJson()">&#128196; Export .json</button>
         </div>
         <div id="maynardCertOut"></div>
-      </section>
+        <!-- honesty anchor — static text required by self-test -->
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;letter-spacing:.03em;">
+          STATUS: RECORD NOT BEATEN &mdash; admissibility is evidence only, not a proof of infinite prime gaps.
+          Admissibility is necessary but not sufficient to guarantee infinitely many prime pairs.
+          There are exactly 53 primes &le; 241. Gates 3&ndash;5 of the Maynard Certificate remain open.
+        </div>
 
       <section id="attackLab" style="display:none;height:100%;overflow:auto;padding:14px;background:radial-gradient(circle at 8% 0%, rgba(126,231,255,.08), transparent 28%),linear-gradient(180deg,#071522,#030911);" aria-label="Prime Theory Attack Lab">
         <h2 class="section-title" style="margin-top:4px;color:#cc88ff;">PRIME THEORY ATTACK LAB</h2>
@@ -13943,6 +13948,8 @@ function runFullAdmissibilityCert241(){
     if(window._boundedGap246Data){
       window._boundedGap246Data.admissibilityChecks   = checks;
       window._boundedGap246Data.admissibilityStatus   = allPass ? 'PASS' : 'FAIL';
+      window._boundedGap246Data.admissible            = allPass;
+      window._boundedGap246Data.highestPrimeChecked   = highestQ;
       window._boundedGap246Data.blockedPrime          = failedChecks.length ? failedChecks[0].q : null;
       window._boundedGap246Data._cert241Complete      = true;
       window._boundedGap246Data._cert241HighestQ      = highestQ;
@@ -14028,78 +14035,137 @@ function runFullAdmissibilityCert241(){
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// POST-WRITE SELF-TEST RUNNER
+// POLIGNAC WORKBENCH SELF TEST
 // Runs automatically on load. Logs to console. Non-blocking.
 // ═══════════════════════════════════════════════════════════════════
 function _selfTest(){
-  const results = [];
+  const results = []; // { name, tier:'pass'|'warn'|'fail', msg }
+
+  function pass(name){
+    results.push({ name, tier:'pass', msg:'' });
+  }
+  function warn(name, msg){
+    results.push({ name, tier:'warn', msg: msg||'' });
+  }
+  function fail(name, msg){
+    results.push({ name, tier:'fail', msg: msg||'' });
+  }
   function check(name, val, expected){
-    const pass = JSON.stringify(val) === JSON.stringify(expected);
-    results.push({ name, pass, got: val, expected });
+    if(JSON.stringify(val) === JSON.stringify(expected)) pass(name);
+    else fail(name, `got ${JSON.stringify(val)}, expected ${JSON.stringify(expected)}`);
   }
-  function checkTrue(name, val){
-    results.push({ name, pass: !!val, got: val, expected: true });
+  function checkTrue(name, val, isWarning){
+    if(val){ pass(name); }
+    else if(isWarning){ warn(name, 'falsy'); }
+    else{ fail(name, 'falsy'); }
   }
 
-  // 1. sieve() correctness
-  const p10 = sieve(10);
-  check('sieve(10) = [2,3,5,7]', p10, [2,3,5,7]);
+  // ── MATH UNIT TESTS ──────────────────────────────────────────────
+  check('sieve(10) = [2,3,5,7]', sieve(10), [2,3,5,7]);
+  check('|primes ≤ 241| = 53', sieve(241).length, 53);        // CRITICAL: 53 not 54
+  check('max prime ≤ 241 = 241', (p=>p[p.length-1])(sieve(241)), 241);
+  check('sieve(2) = [2]', sieve(2), [2]);
 
-  // 2. sieve(30) length
-  checkTrue('sieve(30).length >= 10', sieve(30).length >= 10);
-
-  // 3. gap246Admissibility: trivial tuple [0] passes all small q
+  // admissibility logic — tuple [0] must PASS all q (only 1 residue per prime)
   const trivAdm = gap246Admissibility([0], 30);
-  check('admissibility([0],30).status = PASS', trivAdm.status, 'PASS');
+  check('admissibility([0],30) = PASS', trivAdm.status, 'PASS');
 
-  // 4. gap246Admissibility: tuple [0,1,2,3,4,5] must FAIL at q=2 (occupies both residues)
-  const failAdm = gap246Admissibility([0,2,4], 5);
-  check('admissibility([0,2,4],5).status = FAIL at q=2', failAdm.status, 'FAIL');
+  // tuple [0,1,2] fails at q=3: all three residues 0,1,2 occupy all slots
+  const failAdm3 = gap246Admissibility([0,1,2], 3);
+  check('admissibility([0,1,2],3) = FAIL at q=3', failAdm3.status, 'FAIL');
+  check('blockedPrime([0,1,2],3) = 3', failAdm3.blockedPrime, 3);
 
-  // 5. Full q≤241 sieve has 53 primes (primes up to 241)
-  check('|primes ≤ 241| = 53', sieve(241).length, 53);
-
-  // 6. Highest prime ≤ 241 is 241
-  const p241 = sieve(241);
-  check('max prime ≤ 241 = 241', p241[p241.length-1], 241);
-
-  // 7. DOM: cert241Out exists
-  checkTrue('DOM: #cert241Out exists', !!document.getElementById('cert241Out'));
-
-  // 8. DOM: maynardCertOut exists
-  checkTrue('DOM: #maynardCertOut exists', !!document.getElementById('maynardCertOut'));
-
-  // 9. DOM: gap246Summary exists
+  // ── DOM STRUCTURE ─────────────────────────────────────────────────
+  checkTrue('DOM: #cert241Out exists',    !!document.getElementById('cert241Out'));
+  checkTrue('DOM: #maynardCertOut exists',!!document.getElementById('maynardCertOut'));
   checkTrue('DOM: #gap246Summary exists', !!document.getElementById('gap246Summary'));
+  checkTrue('DOM: #gap246Table exists',   !!document.getElementById('gap246Table'));
+  checkTrue('DOM: #gap246ProgressBar exists', !!document.getElementById('gap246ProgressBar'));
 
-  // 10. Function existence checks
-  checkTrue('fn: runFullAdmissibilityCert241 exists', typeof runFullAdmissibilityCert241 === 'function');
-  checkTrue('fn: runMaynardCertBuilder exists',       typeof runMaynardCertBuilder === 'function');
-  checkTrue('fn: exportMaynardCertJson exists',       typeof exportMaynardCertJson === 'function');
-  checkTrue('fn: exportMaynardCertMd exists',         typeof exportMaynardCertMd === 'function');
-  checkTrue('fn: runBigBulkPolignac exists',          typeof runBigBulkPolignac === 'function');
-  checkTrue('fn: runPrimePianoSwatch exists',         typeof runPrimePianoSwatch === 'function');
-  checkTrue('fn: runSwatchStripCompare exists',       typeof runSwatchStripCompare === 'function');
+  // cert241Out must appear before gap246Summary in DOM order
+  const c241 = document.getElementById('cert241Out');
+  const gSum = document.getElementById('gap246Summary');
+  if(c241 && gSum){
+    const pos = c241.compareDocumentPosition(gSum);
+    // DOCUMENT_POSITION_FOLLOWING = 4 means gSum comes after c241
+    if(pos & 4) pass('DOM order: cert241Out before gap246Summary');
+    else fail('DOM order: cert241Out before gap246Summary', 'wrong order');
+  }
 
-  const passed = results.filter(r => r.pass).length;
-  const failed = results.filter(r => !r.pass);
+  // ── FUNCTION EXISTENCE ───────────────────────────────────────────
+  checkTrue('fn: runFullAdmissibilityCert241', typeof runFullAdmissibilityCert241==='function');
+  checkTrue('fn: runMaynardCertBuilder',       typeof runMaynardCertBuilder==='function');
+  checkTrue('fn: exportMaynardCertJson',       typeof exportMaynardCertJson==='function');
+  checkTrue('fn: exportMaynardCertMd',         typeof exportMaynardCertMd==='function');
+  checkTrue('fn: runBigBulkPolignac',          typeof runBigBulkPolignac==='function');
+  checkTrue('fn: runPrimePianoSwatch',         typeof runPrimePianoSwatch==='function');
+  checkTrue('fn: runSwatchStripCompare',       typeof runSwatchStripCompare==='function');
+  checkTrue('fn: runBoundedGap246Attack',      typeof runBoundedGap246Attack==='function');
+  checkTrue('fn: gap246Admissibility',         typeof gap246Admissibility==='function');
+  checkTrue('fn: sieve',                       typeof sieve==='function');
 
-  console.groupCollapsed(`%c▶ SELF-TEST: ${passed}/${results.length} PASS${
-    failed.length ? ' — '+failed.length+' FAIL' : ' — ALL CLEAR'
-  }`, `color:${failed.length?'#ff4455':'#33ff99'};font-weight:bold;`);
+  // ── LIVE DATA CHECK (warn, not fail, if engine not yet run) ──────
+  const gd = window._boundedGap246Data;
+  if(gd && gd.tuple && gd.tuple.length){
+    pass('_boundedGap246Data.tuple present');
+    // admissibility live test against actual tuple
+    const liveAdm = gap246Admissibility(gd.tuple, 241);
+    const liveQ   = sieve(241);
+    check('live tuple: admissibility primes checked = 53', liveAdm.checks.length, 53);
+    if(liveAdm.status === 'PASS') pass('live tuple: admissible for all q ≤ 241');
+    else warn('live tuple: NOT admissible', `blocked at q=${liveAdm.blockedPrime}`);
+    // highestPrimeChecked patch
+    if(gd.highestPrimeChecked === 241) pass('_boundedGap246Data.highestPrimeChecked = 241');
+    else warn('_boundedGap246Data.highestPrimeChecked not 241 yet', 'run Full q≤241 Certificate first');
+  } else {
+    warn('_boundedGap246Data.tuple not yet loaded', 'Run 246 Attack first — this is expected on fresh load');
+  }
+
+  // ── FORBIDDEN PHRASES ────────────────────────────────────────────
+  // Scan visible document text for overclaim phrases (not in script tags)
+  const bodyText = document.body ? document.body.innerText || '' : '';
+  const FORBIDDEN = [
+    'record beaten', 'proof complete', 'proof is complete',
+    'we have proved', 'QED', 'theorem proved', 'conjecture proved'
+  ];
+  let forbiddenFound = [];
+  FORBIDDEN.forEach(phrase => {
+    if(bodyText.toLowerCase().includes(phrase.toLowerCase()))
+      forbiddenFound.push(phrase);
+  });
+  if(forbiddenFound.length === 0) pass('No forbidden overclaim phrases in rendered text');
+  else fail('Forbidden overclaim phrases found', forbiddenFound.join(', '));
+
+  // ── TALLY ─────────────────────────────────────────────────────────
+  const passCount = results.filter(r=>r.tier==='pass').length;
+  const warnCount = results.filter(r=>r.tier==='warn').length;
+  const failCount = results.filter(r=>r.tier==='fail').length;
+  const total     = results.length;
+  const verdict   = failCount>0 ? 'FAIL'
+                  : warnCount>0 ? 'PASS WITH WARNINGS'
+                  : 'PASS';
+  const verdictCol = failCount>0 ? '#ff4455' : warnCount>0 ? '#ffcc44' : '#33ff99';
+
+  console.groupCollapsed(
+    `%cPOLIGNAC WORKBENCH SELF TEST — ${verdict} (${passCount}P / ${warnCount}W / ${failCount}F of ${total})`,
+    `color:${verdictCol};font-weight:bold;`
+  );
+  console.log(`%cTotal: ${total}  Pass: ${passCount}  Warn: ${warnCount}  Fail: ${failCount}`,
+    'color:#aaa;font-size:11px;');
   results.forEach(r => {
-    if(r.pass){
+    if(r.tier==='pass'){
       console.log(`%c  ✓ ${r.name}`, 'color:#33ff99;');
+    } else if(r.tier==='warn'){
+      console.warn(`  ⚠ ${r.name}${r.msg?' — '+r.msg:''}`);
     } else {
-      console.warn(`  ✗ ${r.name}  got=${JSON.stringify(r.got)}  expected=${JSON.stringify(r.expected)}`);
+      console.error(`  ✗ ${r.name}${r.msg?' — '+r.msg:''}`);
     }
   });
+  console.log(`%c► FINAL: ${verdict}`, `color:${verdictCol};font-weight:bold;font-size:13px;`);
   console.groupEnd();
 
-  if(failed.length){
-    console.error('SELF-TEST FAILURES:', failed.map(r=>r.name));
-  }
-  return { passed, total: results.length, failed: failed.map(r=>r.name) };
+  return { verdict, passed: passCount, warned: warnCount, failed: failCount, total,
+           failNames: results.filter(r=>r.tier==='fail').map(r=>r.name) };
 }
 
 // Run self-tests after DOM is ready, non-blocking
