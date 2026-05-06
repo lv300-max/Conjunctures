@@ -303,6 +303,7 @@ iframe.active{
     <button class="tab" data-target="polignac" aria-selected="false">Polignac</button>
     <button class="tab" data-target="landau4" aria-selected="false">Landau 4th</button>
     <button class="tab" data-target="revpkt" aria-selected="false">Reviewer Packet</button>
+    <button class="tab" data-target="piano" aria-selected="false">Prime Piano</button>
   </nav>
 
   <main class="stage">
@@ -656,6 +657,72 @@ The output is evidence, witness generation, and gap detection.</pre>
         <div id="bulkProgress" style="font-size:12px;color:var(--muted);margin-bottom:8px;"></div>
         <div id="bulkSummary"></div>
         <div id="bulkTable"></div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- PRIME PIANO SWATCH ENGINE                                  -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <section id="brainPiano" style="display:none;">
+        <h2 class="section-title" style="margin-top:4px;">Prime Piano Swatch Engine</h2>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">
+          Visualize prime numbers like piano keys / crochet stitches. See prime gaps, dead zones, and modular lanes.
+        </div>
+
+        <!-- Equation boxes -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:6px 12px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);">gap = q &minus; p</div>
+          <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:6px 12px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);">p and p+k are prime</div>
+          <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:6px 12px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);">n mod M = lane</div>
+          <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:6px 12px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);">density = prime_count / range_size</div>
+        </div>
+
+        <!-- Controls -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
+          <label style="font-size:13px;">Start:</label>
+          <input id="pianoStart" type="number" value="1" min="1"
+            style="width:90px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">Range:</label>
+          <input id="pianoRange" type="number" value="300" min="10" max="3000"
+            style="width:80px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">Row width:</label>
+          <input id="pianoRowW" type="number" value="30" min="5" max="120"
+            style="width:70px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">Mod wheel:</label>
+          <select id="pianoMod"
+            style="border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;">
+            <option value="6">mod 6</option>
+            <option value="30" selected>mod 30</option>
+            <option value="210">mod 210</option>
+            <option value="2310">mod 2310</option>
+          </select>
+          <label style="font-size:13px;">Gap highlight:</label>
+          <select id="pianoGap"
+            style="border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;">
+            <option value="0">all gaps</option>
+            <option value="2">gap 2</option>
+            <option value="4">gap 4</option>
+            <option value="6">gap 6</option>
+            <option value="8">gap 8</option>
+            <option value="10">gap 10</option>
+            <option value="12">gap 12</option>
+          </select>
+          <button class="btn-gold" onclick="runPrimePianoSwatch()">&#9654; Run Prime Piano Swatch</button>
+        </div>
+
+        <!-- Legend -->
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;font-size:11px;">
+          <span style="background:#001a26;border:2px solid var(--cyan);padding:2px 7px;border-radius:3px;color:var(--cyan);">PRIME</span>
+          <span style="background:#1a1400;border:2px solid var(--gold);padding:2px 7px;border-radius:3px;color:var(--gold);">GAP START</span>
+          <span style="background:#1a0d00;border:2px solid #ff8800;padding:2px 7px;border-radius:3px;color:#ff8800;">PAIR END p+k</span>
+          <span style="background:#1a0808;border:1px solid #660010;padding:2px 7px;border-radius:3px;color:#cc2244;">DEAD ZONE</span>
+          <span style="background:#0d0018;border:2px solid #8844cc;padding:2px 7px;border-radius:3px;color:#9966dd;">WHEEL LANE</span>
+          <span style="background:#0a0a0a;border:1px solid #222;padding:2px 7px;border-radius:3px;color:var(--muted);">COMPOSITE</span>
+          <span style="background:#000;border:1px solid #111;padding:2px 7px;border-radius:3px;color:#333;">1</span>
+        </div>
+
+        <div id="pianoGrid"></div>
+        <div id="pianoReport"></div>
+        <div id="pianoOctave"></div>
       </section>
 
       <iframe id="five" src="five_conjecture_workbench.html" title="ANY-N Five Conjecture Workbench"></iframe>
@@ -8379,14 +8446,17 @@ function activate(target){
     tab.setAttribute("aria-selected", String(selected));
   });
 
-  const showBrain = target === "brain";
+  const showBrain  = target === "brain";
   const showRevpkt = target === "revpkt";
+  const showPiano  = target === "piano";
   brain.classList.toggle("active", showBrain);
   revpkt.style.display = showRevpkt ? "block" : "none";
-  openLink.hidden = showBrain || showRevpkt;
+  const pianoSec = document.getElementById('brainPiano');
+  if(pianoSec) pianoSec.style.display = showPiano ? "block" : "none";
+  openLink.hidden = showBrain || showRevpkt || showPiano;
 
   frames.forEach(frame => {
-    const selected = !showBrain && !showRevpkt && frame.id === target;
+    const selected = !showBrain && !showRevpkt && !showPiano && frame.id === target;
     frame.classList.toggle("active", selected);
     if(selected){
       openLink.href = frame.getAttribute("src");
@@ -8965,6 +9035,241 @@ function renderBulkOutput(results, totalJobs, stopped){
       </table>
     </div>
   `;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PRIME PIANO SWATCH ENGINE
+// ═══════════════════════════════════════════════════════════════════
+function runPrimePianoSwatch(){
+  const startN   = Math.max(1,   Number(document.getElementById('pianoStart').value)||1);
+  const rangeN   = Math.max(10,  Math.min(Number(document.getElementById('pianoRange').value)||300, 3000));
+  const rowW     = Math.max(5,   Math.min(Number(document.getElementById('pianoRowW').value)||30, 120));
+  const modM     = Number(document.getElementById('pianoMod').value)||30;
+  const gapHL    = Number(document.getElementById('pianoGap').value)||0; // 0 = all
+
+  const gridEl   = document.getElementById('pianoGrid');
+  const reportEl = document.getElementById('pianoReport');
+  const octaveEl = document.getElementById('pianoOctave');
+
+  gridEl.innerHTML   = '<div style="color:var(--muted);font-size:12px;">Rendering…</div>';
+  reportEl.innerHTML = '';
+  octaveEl.innerHTML = '';
+
+  setTimeout(() => {
+    const endN = startN + rangeN - 1;
+    const pSet = new Set(sieve(endN + 2320)); // enough for octave compare
+
+    // Build per-number data for the main range
+    function buildRange(s, len){
+      const nums = [];
+      let prevPrime = null;
+      for(let n = s; n < s + len; n++){
+        const isPr = n > 1 && pSet.has(n);
+        let gap = null;
+        if(isPr){
+          // find next prime gap
+          let nx = n + 1;
+          while(nx <= s + len + 100 && !pSet.has(nx)) nx++;
+          if(pSet.has(nx)) gap = nx - n;
+        }
+        nums.push({ n, isPr, gap });
+        if(isPr) prevPrime = n;
+      }
+      // mark pair ends (p+k where p is in range)
+      for(let i = 0; i < nums.length; i++){
+        const d = nums[i];
+        if(!d.isPr) continue;
+        const partner = d.n + (gapHL||2); // use selected gap or 2
+        const idx = partner - s;
+        if(idx >= 0 && idx < nums.length && nums[idx].isPr){
+          nums[i].isGapStart  = gapHL === 0 ? (d.gap !== null) : (d.gap === gapHL);
+          nums[idx].isPairEnd = true;
+        } else {
+          nums[i].isGapStart = gapHL === 0 ? (d.gap !== null) : (d.gap === gapHL);
+        }
+      }
+      // mark dead zones: consecutive composites between pair-start primes
+      let inPairGap = false, lastPairPrime = null;
+      for(let i = 0; i < nums.length; i++){
+        const d = nums[i];
+        if(d.isPr && pSet.has(d.n + (gapHL||2))){
+          lastPairPrime = d.n;
+          inPairGap = true;
+        } else if(d.isPr && inPairGap){
+          // we've hit a prime that breaks the dead zone
+          inPairGap = false;
+        } else if(!d.isPr && inPairGap){
+          d.isDeadZone = true;
+        }
+      }
+      return nums;
+    }
+
+    const main = buildRange(startN, rangeN);
+
+    // Wheel survivor lanes: residues coprime to modM
+    function wheelLanes(M){
+      const survivors = new Set();
+      for(let r = 0; r < M; r++){
+        if(gcd(r, M) === 1) survivors.add(r);
+      }
+      return survivors;
+    }
+    function gcd(a,b){ return b === 0 ? a : gcd(b, a%b); }
+    const survivorSet = wheelLanes(modM);
+    const totalLanes  = modM;
+    const survCount   = survivorSet.size;
+    const blockedCount= totalLanes - survCount;
+
+    // Build cell HTML
+    function cellHtml(d){
+      const mod = ((d.n % modM) + modM) % modM;
+      const isWheelSurvivor = survivorSet.has(mod);
+
+      let bg, border, color, opacity = '1';
+      if(d.n === 1){
+        bg='#000'; border='1px solid #111'; color='#333';
+      } else if(!d.isPr && d.isDeadZone){
+        bg='#1a0808'; border='1px solid #660010'; color='#cc2244';
+      } else if(!d.isPr){
+        bg = isWheelSurvivor ? '#0a0014' : '#0a0a0a';
+        border = isWheelSurvivor ? '1px solid #8844cc' : '1px solid #1a1a1a';
+        color = '#444';
+      } else if(d.isGapStart && (gapHL===0 || d.gap===gapHL)){
+        bg='#1a1400'; border='2px solid var(--gold)'; color='var(--gold)';
+      } else if(d.isPairEnd){
+        bg='#1a0d00'; border='2px solid #ff8800'; color='#ff8800';
+      } else {
+        bg='#001a26'; border='2px solid var(--cyan)'; color='var(--cyan)';
+      }
+      if(d.isPr && isWheelSurvivor && d.n !== 1 && bg==='#001a26'){
+        border = '2px solid #8844cc';
+      }
+
+      const label = d.n === 1 ? '1' :
+        d.isPr ? ('P' + (d.isGapStart && d.gap ? '<br><span style="font-size:8px;opacity:.8;">g'+d.gap+'</span>' : '')) :
+        '';
+
+      return `<div title="${d.n}${d.isPr?' (prime)':''}${d.gap?' gap='+d.gap:''}" style="
+        width:34px;height:40px;min-width:34px;
+        background:${bg};border:${border};border-radius:3px;
+        color:${color};font-size:9px;font-weight:bold;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        line-height:1.2;cursor:default;box-sizing:border-box;flex-shrink:0;
+      "><span style="font-size:8px;opacity:.6;">${esc(d.n)}</span>${label}</div>`;
+    }
+
+    // Render grid in rows
+    function renderSwatchGrid(nums, rowWidth){
+      let html = '<div style="display:flex;flex-direction:column;gap:2px;overflow-x:auto;">';
+      for(let i = 0; i < nums.length; i += rowWidth){
+        const row = nums.slice(i, i + rowWidth);
+        html += '<div style="display:flex;gap:2px;">';
+        html += row.map(cellHtml).join('');
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    gridEl.innerHTML = `
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;overflow-x:auto;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">MAIN SWATCH — ${startN} to ${endN} (range ${rangeN}, mod ${modM}${gapHL?', gap '+gapHL+' highlight':''})</div>
+        ${renderSwatchGrid(main, rowW)}
+      </div>
+    `;
+
+    // ── REPORT ────────────────────────────────────────────────────────────
+    const primes   = main.filter(d => d.isPr);
+    const density  = (primes.length / rangeN).toFixed(4);
+    const gaps     = primes.filter(d => d.gap !== null).map(d => d.gap);
+    const gapFreq  = {};
+    gaps.forEach(g => gapFreq[g] = (gapFreq[g]||0) + 1);
+    const gapEntries = Object.entries(gapFreq).sort((a,b) => b[1]-a[1]);
+    const mostCommon = gapEntries[0] ? `gap ${gapEntries[0][0]} (${gapEntries[0][1]}x)` : '—';
+    const largest    = gaps.length ? Math.max(...gaps) : 0;
+    const hlCount    = gapHL > 0 ? gaps.filter(g => g === gapHL).length : gaps.length;
+
+    reportEl.innerHTML = `
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">PRIME PIANO PATTERN REPORT</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;margin-bottom:14px;">
+          ${[
+            ['Total primes', primes.length],
+            ['Prime density', density],
+            ['Gaps found', gaps.length],
+            ['Most common gap', mostCommon],
+            ['Largest gap', largest],
+            [gapHL?'Gap '+gapHL+' count':'Total gaps', hlCount],
+            ['Wheel mod', modM],
+            ['Survivor lanes', survCount + ' / ' + totalLanes],
+            ['Blocked lanes', blockedCount + ' / ' + totalLanes],
+          ].map(([label,val]) => `
+            <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+              <div style="font-size:10px;color:var(--muted);">${label}</div>
+              <div style="font-size:16px;font-weight:bold;color:var(--cyan);">${esc(val)}</div>
+            </div>`).join('')}
+        </div>
+        <div style="background:rgba(125,255,155,.05);border:1px solid rgba(125,255,155,.18);border-radius:5px;padding:10px 14px;font-size:12px;color:var(--muted);line-height:1.8;">
+          <strong style="color:var(--text);">PRIME SWATCH RESULT: VISUAL PATTERN TEST ONLY / NOT A PROOF</strong><br>
+          This engine visualizes prime structure. It does not prove Polignac's Conjecture.
+          It does not prove primes repeat. It does not prove infinite prime pairs exist.
+          Mod lane survival is a necessary condition, not a sufficient one.
+        </div>
+      </div>
+    `;
+
+    // ── OCTAVE COMPARE ─────────────────────────────────────────────────────────
+    const oct1 = buildRange(startN,           rangeN);
+    const oct2 = buildRange(startN + modM,     rangeN);
+    const oct3 = buildRange(startN + 2 * modM, rangeN);
+
+    function countSame(a, b){
+      let same = 0;
+      for(let i = 0; i < Math.min(a.length, b.length); i++)
+        if(a[i].isPr === b[i].isPr) same++;
+      return same;
+    }
+    const len12   = Math.min(oct1.length, oct2.length);
+    const same12  = countSame(oct1, oct2);
+    const same13  = countSame(oct1, oct3);
+    const pct12   = len12 > 0 ? ((same12/len12)*100).toFixed(1) : '0';
+    const pct13   = len12 > 0 ? ((same13/len12)*100).toFixed(1) : '0';
+
+    octaveEl.innerHTML = `
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">OCTAVE COMPARE — Three stacked swatches offset by mod ${modM}</div>
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Octave 1: ${startN} – ${startN+rangeN-1}</div>
+        <div style="overflow-x:auto;margin-bottom:10px;">${renderSwatchGrid(oct1, rowW)}</div>
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Octave 2: ${startN+modM} – ${startN+modM+rangeN-1}</div>
+        <div style="overflow-x:auto;margin-bottom:10px;">${renderSwatchGrid(oct2, rowW)}</div>
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Octave 3: ${startN+2*modM} – ${startN+2*modM+rangeN-1}</div>
+        <div style="overflow-x:auto;margin-bottom:14px;">${renderSwatchGrid(oct3, rowW)}</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">
+          <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Matching 1 vs 2</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--gold);">${same12} / ${len12}</div>
+            <div style="font-size:11px;color:var(--muted);">${pct12}%</div>
+          </div>
+          <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Matching 1 vs 3</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--gold);">${same13} / ${len12}</div>
+            <div style="font-size:11px;color:var(--muted);">${pct13}%</div>
+          </div>
+        </div>
+        <div style="background:#060e18;border-left:3px solid var(--cyan);border-radius:4px;padding:8px 12px;font-size:12px;color:var(--muted);line-height:1.8;">
+          <strong style="color:var(--cyan);">Note:</strong>
+          Mod lanes repeat. Prime placement does not repeat exactly.
+          High matching % reflects wheel structure, not periodic prime distribution.
+          This is a visual pattern tester only.
+        </div>
+      </div>
+    `;
+  }, 0);
 }
 
 _renders.forEach((fn, i) => setTimeout(fn, i * 50));
