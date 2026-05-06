@@ -370,33 +370,40 @@ function runPolignac(){
 function renderPolignacLemmas(r){
   const lemmas = [
     { id:'A', name:'Gap Witness Lower Bound',
+      law:'T(N,k) &ge; 1 &nbsp; &forall; even k &isin; [2, K<sub>max</sub>], &forall; tested N',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
       finiteDesc:`For every tested even k in [2,${r.Kmax}], T(N,k) >= 1.`,
-      universalDesc:'Not proved for all even k as N → ∞.' },
+      universalDesc:'Not proved for all even k as N &rarr; &infin;.' },
     { id:'B', name:'Density Floor',
+      law:'c(k) = T(N,k) / (N / log&sup2;N) &ge; c<sub>min</sub> &gt; 0 &nbsp; &forall; tested even k',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
-      finiteDesc:`Min density c >= ${r.minC} across all tested gaps.`,
+      finiteDesc:`Min density c &ge; ${r.minC} across all tested gaps.`,
       universalDesc:'No analytic lower bound for c(k) proved universally.' },
     { id:'C', name:'No Full Residue Cover',
+      law:'&forall; even k, &forall; prime q: &nbsp; #{r mod q : r(r+k) &equiv; 0 mod q} &lt; q',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
       finiteDesc:'No even k has all residue classes mod small primes fully blocked.',
       universalDesc:'Universal sieve obstruction not ruled out analytically.' },
     { id:'D', name:'Residue Opening',
+      law:'&forall; even k, &forall; prime p: &nbsp; &exist; r with 0 &le; r &lt; p, &nbsp; r &ne; 0, &nbsp; r+k &ne; 0 mod p',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
       finiteDesc:'For every tested k, at least one residue class mod p stays open.',
       universalDesc:'Needs analytic proof that openness persists for all N.' },
     { id:'E', name:'Prime Survivor in Gap',
+      law:'&forall; even k &isin; [2, K<sub>max</sub>]: &nbsp; &exist; prime p &le; N &nbsp; s.t. &nbsp; p + k &isin; &Popf;',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
       finiteDesc:'For every tested k, a prime p with p+k prime was found.',
       universalDesc:'Infinitely many survivors not proved universally.' },
     { id:'F', name:'Rescue Prime',
+      law:'&forall; n<sub>0</sub>: &nbsp; &exist; p &isin; (n<sub>0</sub>, n<sub>0</sub> + &radic;N] &nbsp; s.t. &nbsp; p + k &isin; &Popf; &nbsp; (conjectured)',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
       finiteDesc:'When gap looks thin, a rescue prime pair always found in tested range.',
       universalDesc:'Rescue mechanism not formalized into a universal theorem.' },
-    { id:'G', name:'Pattern Bridge',
-      finite:'STRUCTURE PASS', universal:'IMPLICATION OPEN',
+    { id:'G', name:'Hardy-Littlewood Conjecture B Bridge',
+      law:'T(N,k) ~ C(k) &middot; N / log&sup2;N, &nbsp; C(k) = 2 &prod;<sub>p|k, p odd</sub> (p&minus;1)/(p&minus;2) &middot; &prod;<sub>p&nmid;k, p odd</sub> p(p&minus;1)/(p&minus;2)&sup2;',
+      finite:'STRUCTURE PASS', universal:'CONJECTURE ONLY',
       finiteDesc:'Finite density pattern is consistent with Hardy-Littlewood Conjecture B.',
-      universalDesc:'Implication from finite pattern to universal frequency unproved.' }
+      universalDesc:'Hardy-Littlewood Conjecture B is unproved. This bridge is doubly open.' }
   ];
 
   const panel = document.getElementById('polLemmaPanel');
@@ -410,6 +417,7 @@ function renderPolignacLemmas(r){
         <span class="pass" style="font-size:11px;">${esc(l.finite)}</span>
         <span class="open" style="font-size:11px;">${esc(l.universal)}</span>
       </div>
+      <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;margin-bottom:7px;font-size:13px;font-family:Georgia,serif;color:var(--cyan);letter-spacing:.3px;">${l.law}</div>
       <div style="font-size:12px;color:var(--text);margin-bottom:3px;">&#9654; ${esc(l.finiteDesc)}</div>
       <div style="font-size:12px;color:var(--yellow);">&#9675; ${esc(l.universalDesc)}</div>
     </div>`).join('');

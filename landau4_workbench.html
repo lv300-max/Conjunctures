@@ -413,32 +413,39 @@ function runLandau4(){
 function renderLandau4Lemmas(r){
   const lemmas = [
     { id:'A', name:'Infinite Witness Lower Bound',
+      law:'P(N) = #{n &le; N : n&sup2;+1 &isin; &Popf;} &rarr; &infin; &nbsp; as &nbsp; N &rarr; &infin; &nbsp; (TARGET — unproved)',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
-      finiteDesc:`Found ${r.P.toLocaleString()} primes of the form n²+1 for n ≤ ${r.N.toLocaleString()}.`,
-      universalDesc:'Not proved that P(N) → ∞. Parity problem blocks every classical sieve approach.' },
+      finiteDesc:`Found ${r.P.toLocaleString()} primes of the form n&sup2;+1 for n &le; ${r.N.toLocaleString()}.`,
+      universalDesc:'Not proved that P(N) &rarr; &infin;. Parity problem blocks every classical sieve approach.' },
     { id:'B', name:'Density Floor',
+      law:'d(N) = P(N) / (N / log N) &ge; c &gt; 0 &nbsp; for some absolute constant c &nbsp; (unproved)',
       finite:'FINITE PASS', universal:'PARITY WALL',
       finiteDesc:`Measured density d = ${r.density} vs Hardy-Littlewood expected ${r.hlExpected.toLocaleString()}.`,
-      universalDesc:'No analytic lower bound d >= c > 0 proved universally. Iwaniec (1978) is the ceiling of known results.' },
+      universalDesc:'No analytic lower bound d &ge; c &gt; 0 proved universally. Iwaniec (1978) is the ceiling of known results.' },
     { id:'C', name:'No Full Residue Cover',
-      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
-      finiteDesc:'n²+1 is never divisible by any prime p ≡ 3 mod 4. Residue openness confirmed computationally.',
-      universalDesc:'Residue structure is known, but it is not enough — sieve parity blocks the final step.' },
+      law:'&forall; prime p &equiv; 3 mod 4: &nbsp; p &nmid; n&sup2;+1 &nbsp; &forall; n &nbsp; (proved — &minus;1 is not a QR mod p)',
+      finite:'FINITE PASS', universal:'PROVED (structural)',
+      finiteDesc:'n&sup2;+1 is never divisible by any prime p &equiv; 3 mod 4. Residue openness confirmed computationally.',
+      universalDesc:'This direction IS proved. Residue structure is fully known. The gap is elsewhere.' },
     { id:'D', name:'Quadratic Residue Opening',
-      finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
-      finiteDesc:'-1 is a quadratic residue mod p only for p ≡ 1 mod 4, so half of all primes do not divide n²+1.',
-      universalDesc:'This structural fact is proved. The gap is using it to produce a lower bound on prime values.' },
-    { id:'E', name:'Almost-Prime Survivor (Iwaniec)',
-      finite:'FINITE PASS', universal:'PARTIAL — ≤2 FACTORS PROVED',
-      finiteDesc:'All found values are prime (1 factor). Iwaniec proved infinitely many n²+1 have ≤ 2 prime factors.',
-      universalDesc:'Going from ≤2 factors to exactly 1 factor (prime) is the precise open gap.' },
+      law:'&forall; prime p &equiv; 1 mod 4: &nbsp; #{r mod p : r&sup2; &equiv; &minus;1 mod p} = 2 &nbsp; (proved by Euler)',
+      finite:'FINITE PASS', universal:'PROVED (structural)',
+      finiteDesc:'&minus;1 is a quadratic residue mod p only for p &equiv; 1 mod 4, so exactly 2 of p residues are blocked.',
+      universalDesc:'Proved by Euler. The open gap is using this structure to lower-bound prime values.' },
+    { id:'E', name:'Almost-Prime Survivor (Iwaniec 1978)',
+      law:'&exist; infinitely many n &isin; &Nopf; &nbsp; s.t. &nbsp; &Omega;(n&sup2;+1) &le; 2 &nbsp; (proved, Iwaniec 1978)',
+      finite:'FINITE PASS', universal:'PARTIAL — &le;2 FACTORS PROVED',
+      finiteDesc:'All found values are prime (1 factor). Iwaniec proved infinitely many n&sup2;+1 have &le; 2 prime factors.',
+      universalDesc:'Open gap: &Omega;(n&sup2;+1) &le; 2 &nbsp;&rarr;&nbsp; &Omega;(n&sup2;+1) = 1. &nbsp; This step is the parity barrier.' },
     { id:'F', name:'Dry Spell Bound',
+      law:'limsup<sub>N&rarr;&infin;</sub> (gap between consecutive n with n&sup2;+1 prime) = ? &nbsp; (unknown)',
       finite:'FINITE PASS', universal:'UNIVERSAL OPEN',
-      finiteDesc:`Longest dry spell in tested range: ${r.longestGap ? r.longestGap.length : 'N/A'} consecutive n with no prime n²+1.`,
+      finiteDesc:`Longest dry spell in tested range: ${r.longestGap ? r.longestGap.length : 'N/A'} consecutive n with no prime n&sup2;+1.`,
       universalDesc:'No universal bound on dry spell length. Could they grow without limit? Unknown.' },
-    { id:'G', name:'Hardy-Littlewood Constant Bridge',
+    { id:'G', name:'Hardy-Littlewood Conjecture F Bridge',
+      law:'P(N) ~ C &middot; N / log N, &nbsp; C = 2 &prod;<sub>p&equiv;1 mod 4</sub> p(p&minus;1)/(p&minus;2)&sup2; &asymp; 1.3727 &nbsp; (conjecture)',
       finite:'STRUCTURE PASS', universal:'CONJECTURE ONLY',
-      finiteDesc:`Measured ratio P(N)/HL_expected = ${r.densityRatio}. Consistent with HL Conjecture F constant C ≈ 1.3727.`,
+      finiteDesc:`Measured ratio P(N)/HL_expected = ${r.densityRatio}. Consistent with HL Conjecture F constant C &asymp; 1.3727.`,
       universalDesc:'Hardy-Littlewood Conjecture F is unproved. This bridge is doubly open.' }
   ];
 
@@ -450,9 +457,10 @@ function renderLandau4Lemmas(r){
         <span style="color:var(--muted);font-size:12px;min-width:20px;">${esc(l.id)}.</span>
         <span style="font-weight:bold;font-size:14px;">${esc(l.name)}</span>
         <span class="pass" style="font-size:11px;">${esc(l.finite)}</span>
-        <span class="${l.universal.includes('PARITY')||l.universal.includes('PARTIAL')?'wall':'open'}" style="font-size:11px;">${esc(l.universal)}</span>
+        <span class="${l.universal.includes('PARITY')||l.universal.includes('PARTIAL')?'wall':l.universal.includes('PROVED')?'pass':'open'}" style="font-size:11px;">${esc(l.universal)}</span>
       </div>
-      <div style="font-size:12px;color:var(--text);margin-bottom:3px;">&#9654; ${esc(l.finiteDesc)}</div>
+      <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;margin-bottom:7px;font-size:13px;font-family:Georgia,serif;color:var(--cyan);letter-spacing:.3px;">${l.law}</div>
+      <div style="font-size:12px;color:var(--text);margin-bottom:3px;">&#9654; ${l.finiteDesc}</div>
       <div style="font-size:12px;color:var(--yellow);">&#9675; ${esc(l.universalDesc)}</div>
     </div>`).join('');
 }
