@@ -955,6 +955,7 @@ The output is evidence, witness generation, and gap detection.</pre>
           <input id="gap246Rounds" type="number" value="50" min="1" max="1000"
             style="width:70px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
           <button class="btn-gold" onclick="runBoundedGap246Attack()" style="background:#27120a;border:1px solid var(--orange);color:var(--orange);">Run 246 Attack</button>
+          <button class="btn-gold" onclick="runFullAdmissibilityCert241()" style="background:#051a2e;border:1px solid var(--cyan);color:var(--cyan);">&#9654; Full q≤241 Certificate</button>
           <button class="btn-gold" onclick="exportBoundedGap246JSON()" style="background:#1d1705;border:1px solid var(--gold);color:var(--gold);">Export 246 JSON</button>
           <button class="btn-gold" onclick="exportBoundedGap246Markdown()" style="background:#1d1705;border:1px solid var(--gold);color:var(--gold);">Export 246 Markdown</button>
         </div>
@@ -962,6 +963,7 @@ The output is evidence, witness generation, and gap detection.</pre>
         <div style="height:10px;background:#06111d;border:1px solid #12384f;border-radius:20px;overflow:hidden;margin-bottom:10px;">
           <div id="gap246ProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--orange),var(--yellow));"></div>
         </div>
+        <div id="cert241Out" style="margin-bottom:12px;"></div>
         <div id="gap246Summary"></div>
         <div id="gap246Table"></div>
 
@@ -13899,6 +13901,209 @@ function exportMaynardCertJson(){
   a.download = 'maynard_certificate.json';
   a.click();
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// FULL q≤241 ADMISSIBILITY CERTIFICATE
+// ═══════════════════════════════════════════════════════════════════
+function runFullAdmissibilityCert241(){
+  const CERT_PRIME_LIMIT = 241; // all primes up to and including 241
+  const outEl = document.getElementById('cert241Out');
+  outEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0;">Running full q≤241 admissibility certificate…</div>';
+
+  setTimeout(() => {
+    // Pull tuple from Bounded Gap engine if available
+    const existing = window._boundedGap246Data || null;
+    const tuple = existing && existing.tuple && existing.tuple.length
+      ? existing.tuple.slice().sort((a,b) => a-b)
+      : null;
+
+    if(!tuple || !tuple.length){
+      outEl.innerHTML = `<div class="maynard-cert-panel" style="border-color:var(--yellow);">
+        <div style="color:var(--yellow);font-size:13px;font-weight:bold;margin-bottom:6px;">No admissible tuple loaded.</div>
+        <div style="color:var(--muted);font-size:12px;">Run the 246 Attack engine first to generate a tuple, then run this certificate.</div>
+      </div>`;
+      return;
+    }
+
+    const diameter = tuple[tuple.length-1] - tuple[0];
+    const allPrimesTo241 = sieve(CERT_PRIME_LIMIT); // guaranteed up to 241
+    const checks = allPrimesTo241.map(q => {
+      const residues = [...new Set(tuple.map(h => ((h % q) + q) % q))].sort((a,b)=>a-b);
+      const pass = residues.length < q;
+      return { q, occupiedCount: residues.length, total: q, pass,
+               status: pass ? 'PASS' : 'FAIL',
+               residues };
+    });
+
+    const failedChecks = checks.filter(c => !c.pass);
+    const allPass     = failedChecks.length === 0;
+    const highestQ    = allPrimesTo241[allPrimesTo241.length-1];
+
+    // Patch the existing _boundedGap246Data so Maynard cert can read it
+    if(window._boundedGap246Data){
+      window._boundedGap246Data.admissibilityChecks   = checks;
+      window._boundedGap246Data.admissibilityStatus   = allPass ? 'PASS' : 'FAIL';
+      window._boundedGap246Data.blockedPrime          = failedChecks.length ? failedChecks[0].q : null;
+      window._boundedGap246Data._cert241Complete      = true;
+      window._boundedGap246Data._cert241HighestQ      = highestQ;
+    }
+
+    const statusCol  = allPass ? 'var(--green)' : 'var(--red)';
+    const statusBg   = allPass ? '#0a2e1a'       : '#1a0808';
+    const statusBord = allPass ? 'var(--green)'  : 'var(--red)';
+    const statusText = allPass
+      ? `ADMISSIBILITY PASS — all ${checks.length} primes ≤ 241 checked`
+      : `FAIL at q=${failedChecks[0].q} (${failedChecks.length} obstruction${failedChecks.length>1?'s':''})` ;
+
+    const topFailed = failedChecks.slice(0,5).map(c=>
+      `<div style="font-size:11px;color:var(--red);margin-top:3px;">q=${c.q}: ${c.occupiedCount} residues occupied / ${c.total} (BLOCKED)</div>`
+    ).join('');
+
+    const tableRows = checks.map(c => `
+      <tr>
+        <td>${c.q}</td>
+        <td style="color:var(--muted);">${c.occupiedCount} / ${c.total}</td>
+        <td style="font-size:10px;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          ${c.residues.slice(0,12).join(', ')}${c.residues.length>12?' …':''}
+        </td>
+        <td><span class="status ${c.pass?'pass':'fail'}" style="font-size:10px;">${c.pass?'PASS':'FAIL'}</span></td>
+      </tr>`).join('');
+
+    outEl.innerHTML = `
+      <div class="maynard-cert-panel" style="border-color:${statusBord};">
+        <div class="maynard-cert-title">FULL q≤241 ADMISSIBILITY CERTIFICATE</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">
+          <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Tuple length</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--cyan);">${tuple.length}</div>
+          </div>
+          <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Diameter</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--cyan);">${diameter}</div>
+          </div>
+          <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Primes checked</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--cyan);">${checks.length} (up to q=${highestQ})</div>
+          </div>
+          <div style="background:${statusBg};border:1px solid ${statusBord};border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:var(--muted);">Result</div>
+            <div style="font-size:14px;font-weight:bold;color:${statusCol};">${allPass?'PASS':'FAIL'}</div>
+          </div>
+        </div>
+
+        <div style="background:${statusBg};border:1px solid ${statusBord};border-radius:5px;padding:10px 14px;font-size:13px;font-weight:bold;color:${statusCol};margin-bottom:10px;">
+          ${statusText}
+          ${topFailed}
+        </div>
+
+        <!-- Equation box -->
+        <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);margin-bottom:10px;">
+          #{r mod q : r &isin; H mod q} &lt; q &nbsp;∀ prime q ≤ 241
+        </div>
+
+        <!-- Scrollable results table -->
+        <div style="max-height:280px;overflow-y:auto;">
+          <table class="math-table" style="width:100%;font-size:11px;">
+            <thead><tr><th>q</th><th>Residues used</th><th>Residue set (first 12)</th><th>Status</th></tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+
+        <div class="maynard-cert-honesty" style="margin-top:10px;">
+          This certificate covers all primes q ≤ 241. Admissibility is necessary but not sufficient
+          to guarantee infinitely many prime pairs. Gates 3–5 of the Maynard Certificate remain open.
+        </div>
+      </div>
+    `;
+
+    // Auto-run Maynard Certificate Builder so it reflects the fresh q≤241 data
+    setTimeout(() => {
+      runMaynardCertBuilder();
+      // Scroll to the Maynard output if it exists
+      const mEl = document.getElementById('maynardCertOut');
+      if(mEl) mEl.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 80);
+
+  }, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// POST-WRITE SELF-TEST RUNNER
+// Runs automatically on load. Logs to console. Non-blocking.
+// ═══════════════════════════════════════════════════════════════════
+function _selfTest(){
+  const results = [];
+  function check(name, val, expected){
+    const pass = JSON.stringify(val) === JSON.stringify(expected);
+    results.push({ name, pass, got: val, expected });
+  }
+  function checkTrue(name, val){
+    results.push({ name, pass: !!val, got: val, expected: true });
+  }
+
+  // 1. sieve() correctness
+  const p10 = sieve(10);
+  check('sieve(10) = [2,3,5,7]', p10, [2,3,5,7]);
+
+  // 2. sieve(30) length
+  checkTrue('sieve(30).length >= 10', sieve(30).length >= 10);
+
+  // 3. gap246Admissibility: trivial tuple [0] passes all small q
+  const trivAdm = gap246Admissibility([0], 30);
+  check('admissibility([0],30).status = PASS', trivAdm.status, 'PASS');
+
+  // 4. gap246Admissibility: tuple [0,1,2,3,4,5] must FAIL at q=2 (occupies both residues)
+  const failAdm = gap246Admissibility([0,2,4], 5);
+  check('admissibility([0,2,4],5).status = FAIL at q=2', failAdm.status, 'FAIL');
+
+  // 5. Full q≤241 sieve has 53 primes (primes up to 241)
+  check('|primes ≤ 241| = 53', sieve(241).length, 53);
+
+  // 6. Highest prime ≤ 241 is 241
+  const p241 = sieve(241);
+  check('max prime ≤ 241 = 241', p241[p241.length-1], 241);
+
+  // 7. DOM: cert241Out exists
+  checkTrue('DOM: #cert241Out exists', !!document.getElementById('cert241Out'));
+
+  // 8. DOM: maynardCertOut exists
+  checkTrue('DOM: #maynardCertOut exists', !!document.getElementById('maynardCertOut'));
+
+  // 9. DOM: gap246Summary exists
+  checkTrue('DOM: #gap246Summary exists', !!document.getElementById('gap246Summary'));
+
+  // 10. Function existence checks
+  checkTrue('fn: runFullAdmissibilityCert241 exists', typeof runFullAdmissibilityCert241 === 'function');
+  checkTrue('fn: runMaynardCertBuilder exists',       typeof runMaynardCertBuilder === 'function');
+  checkTrue('fn: exportMaynardCertJson exists',       typeof exportMaynardCertJson === 'function');
+  checkTrue('fn: exportMaynardCertMd exists',         typeof exportMaynardCertMd === 'function');
+  checkTrue('fn: runBigBulkPolignac exists',          typeof runBigBulkPolignac === 'function');
+  checkTrue('fn: runPrimePianoSwatch exists',         typeof runPrimePianoSwatch === 'function');
+  checkTrue('fn: runSwatchStripCompare exists',       typeof runSwatchStripCompare === 'function');
+
+  const passed = results.filter(r => r.pass).length;
+  const failed = results.filter(r => !r.pass);
+
+  console.groupCollapsed(`%c▶ SELF-TEST: ${passed}/${results.length} PASS${
+    failed.length ? ' — '+failed.length+' FAIL' : ' — ALL CLEAR'
+  }`, `color:${failed.length?'#ff4455':'#33ff99'};font-weight:bold;`);
+  results.forEach(r => {
+    if(r.pass){
+      console.log(`%c  ✓ ${r.name}`, 'color:#33ff99;');
+    } else {
+      console.warn(`  ✗ ${r.name}  got=${JSON.stringify(r.got)}  expected=${JSON.stringify(r.expected)}`);
+    }
+  });
+  console.groupEnd();
+
+  if(failed.length){
+    console.error('SELF-TEST FAILURES:', failed.map(r=>r.name));
+  }
+  return { passed, total: results.length, failed: failed.map(r=>r.name) };
+}
+
+// Run self-tests after DOM is ready, non-blocking
+setTimeout(_selfTest, 400);
 
 _renders.forEach((fn, i) => setTimeout(fn, i * 50));
 </script>
