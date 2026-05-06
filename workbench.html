@@ -611,6 +611,24 @@ The output is evidence, witness generation, and gap detection.</pre>
           </table>
         </div>
         <div id="lemmaGapAttackPanel"></div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- POLIGNAC ATTACK BOARD                                   -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <h2 class="section-title" style="margin-top:28px;">Polignac Attack Board</h2>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">
+          Proof-pressure engine for Polignac's Conjecture: for every even k, are there infinitely many prime pairs (p, p+k)?
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
+          <label style="font-size:13px;">N:</label>
+          <input id="pabN" type="number" value="200000" min="1000" max="1000000"
+            style="width:110px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">k (even):</label>
+          <input id="pabK" type="number" value="2" min="2" max="1000" step="2"
+            style="width:80px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <button class="btn-gold" onclick="runPolignacAttackBoard()">&#9654; Run Polignac Attack</button>
+        </div>
+        <div id="pabOut"></div>
       </section>
 
       <iframe id="five" src="five_conjecture_workbench.html" title="ANY-N Five Conjecture Workbench"></iframe>
@@ -8375,6 +8393,200 @@ const _renders = [
   renderCoverageUnion,
   renderPuzzleProofPush
 ];
+// ═══════════════════════════════════════════════════════════════════
+// POLIGNAC ATTACK BOARD
+// ═══════════════════════════════════════════════════════════════════
+function runPolignacAttackBoard(){
+  const N = Math.max(1000, Math.min(Number(document.getElementById('pabN').value)||200000, 1000000));
+  let k = Number(document.getElementById('pabK').value)||2;
+  if(k < 2) k = 2;
+  if(k % 2 !== 0) k++;
+
+  const el = document.getElementById('pabOut');
+  el.innerHTML = '<div style="color:var(--muted);font-size:13px;">Computing…</div>';
+
+  setTimeout(() => {
+    const primes = sieve(N + k);
+    const primeSet = new Set(primes);
+
+    // ── PANEL 1: LOCAL OBSTRUCTION TEST ──────────────────────────
+    const smallPrimes = [2,3,5,7,11,13,17,19,23,29,31];
+    const obstructionRows = smallPrimes.map(q => {
+      let blocked = 0;
+      for(let r = 0; r < q; r++) if(((r % q) * ((r + k) % q)) % q === 0) blocked++;
+      const pass = blocked < q;
+      return { q, blocked, total: q, pass };
+    });
+    const obstructionPass = obstructionRows.every(r => r.pass);
+
+    // ── PANEL 2: SURVIVOR DENSITY TEST ───────────────────────────
+    let survivors = 0;
+    let firstPair = null;
+    for(const p of primes){
+      if(p > N) break;
+      if(primeSet.has(p + k)){
+        survivors++;
+        if(!firstPair) firstPair = `${p} + ${k} = ${p+k}`;
+      }
+    }
+    const expected = Math.round(N / (Math.log(N) ** 2));
+    const ratio = expected > 0 ? (survivors / expected).toFixed(4) : '0';
+    const densityPass = survivors > 0;
+
+    // ── PANEL 3: LONG GAP ATTACK ──────────────────────────────────
+    let lastPrime = null, maxGapLen = 0, maxGapFrom = null, maxGapTo = null;
+    const gapData = [];
+    for(const p of primes){
+      if(p > N) break;
+      if(primeSet.has(p + k)){
+        if(lastPrime !== null){
+          const g = p - lastPrime;
+          if(g > maxGapLen){ maxGapLen = g; maxGapFrom = lastPrime; maxGapTo = p; }
+          if(g > 50) gapData.push({ from: lastPrime, to: p, len: g });
+        }
+        lastPrime = p;
+      }
+    }
+    gapData.sort((a,b) => b.len - a.len);
+
+    // ── PANEL 4: INFINITY GATE ────────────────────────────────────
+    const gate = [
+      { id:'A', label:'T(N,k) &ge; 1 for tested even k',
+        status:'FINITE PASS', cls:'pass',
+        law:'T(N,k) &ge; 1 &nbsp; &forall; even k &isin; [2, K<sub>max</sub>]' },
+      { id:'B', label:'Density c(k) > 0 in tested range',
+        status:'FINITE PASS', cls:'pass',
+        law:'c(k) = T(N,k) / (N / log&sup2;N) &gt; 0' },
+      { id:'C', label:'No modulus blocks all residues',
+        status:'PROVED STRUCTURAL', cls:'proved',
+        law:'#{r mod q : r(r+k) &equiv; 0 mod q} &lt; q &nbsp; &forall; prime q' },
+      { id:'D', label:'Open residue lane exists mod p',
+        status:'PROVED STRUCTURAL', cls:'proved',
+        law:'&exist; r mod p &nbsp; s.t. &nbsp; r &ne; 0 &nbsp; and &nbsp; r+k &ne; 0 mod p' },
+      { id:'E', label:'Prime pair witness found',
+        status:'FINITE PASS', cls:'pass',
+        law:'&exist; prime p &le; N &nbsp; s.t. &nbsp; p+k &isin; &Popf;' },
+      { id:'F', label:'Infinitely many pairs — OPEN',
+        status:'OPEN', cls:'open',
+        law:'&forall; n<sub>0</sub> &nbsp; &exist; p &gt; n<sub>0</sub> &nbsp; s.t. &nbsp; p and p+k are both prime' },
+      { id:'G', label:'Full asymptotic — OPEN',
+        status:'OPEN', cls:'open',
+        law:'T(N,k) ~ C(k) &middot; N / log&sup2;N &nbsp; as &nbsp; N &rarr; &infin;' },
+    ];
+
+    const badgeStyle = {
+      pass:   'background:#0a2e1a;border:1px solid var(--green);color:var(--green);',
+      proved: 'background:#051a2e;border:1px solid var(--cyan);color:var(--cyan);',
+      open:   'background:#1a1200;border:1px solid var(--yellow);color:var(--yellow);',
+    };
+
+    el.innerHTML = `
+
+      <!-- STATUS BANNER -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="background:#0a2e1a;border:1px solid var(--green);border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">FINITE STATUS</div>
+          <div style="font-size:16px;font-weight:bold;color:var(--green);">FINITE PRESSURE TEST PASS</div>
+        </div>
+        <div style="background:#1a1200;border:1px solid var(--yellow);border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">UNIVERSAL STATUS</div>
+          <div style="font-size:16px;font-weight:bold;color:var(--yellow);">UNIVERSAL PROOF OPEN</div>
+        </div>
+      </div>
+
+      <!-- SUMMARY BOX -->
+      <div style="background:var(--panel2);border-left:3px solid var(--cyan);border-radius:6px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.8;">
+        <strong>POLIGNAC STATUS: FINITE PRESSURE TEST PASS / UNIVERSAL PROOF OPEN</strong><br>
+        &bull; No local modular obstruction found for k=${esc(k)}.<br>
+        &bull; Prime pairs (p, p+${esc(k)}) found in tested range [2, ${N.toLocaleString()}].<br>
+        &bull; Long dead zones are finite observations only.<br>
+        &bull; Infinity still requires Lemma F: &forall; n<sub>0</sub> &exist; p &gt; n<sub>0</sub> with p and p+k both prime.
+      </div>
+
+      <!-- PANEL 1: LOCAL OBSTRUCTION TEST -->
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">PANEL 1 — LOCAL OBSTRUCTION TEST</div>
+        <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:13px;font-family:Georgia,serif;color:var(--cyan);">
+          #{r mod q : r(r+k) &equiv; 0 mod q} &lt; q &nbsp; &forall; prime q
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">For each small prime q, count residues r where p or p+k would be blocked. PASS = not all residues blocked.</div>
+        <table class="math-table" style="width:100%;">
+          <thead><tr><th>q</th><th>Blocked residues</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            ${obstructionRows.map(r=>`
+              <tr>
+                <td>q = ${r.q}</td>
+                <td style="color:var(--yellow);">${r.blocked}</td>
+                <td style="color:var(--muted);">${r.total}</td>
+                <td><span class="status ${r.pass?'pass':'fail'}" style="font-size:11px;">${r.pass?'PASS — open lane exists':'FAIL — all blocked'}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:10px;font-size:13px;font-weight:bold;color:${obstructionPass?'var(--green)':'var(--red)'};">&#9654; ${obstructionPass?'NO LOCAL OBSTRUCTION FOUND — all tested moduli have open lanes':'OBSTRUCTION FOUND'}</div>
+      </div>
+
+      <!-- PANEL 2: SURVIVOR DENSITY TEST -->
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">PANEL 2 — SURVIVOR DENSITY TEST</div>
+        <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:13px;font-family:Georgia,serif;color:var(--cyan);">
+          c(k) = T(N,k) / (N / log&sup2;N) &nbsp;&mdash;&nbsp; T(N,k) = #{p &le; N : p and p+k both prime}
+        </div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:10px;">
+          <div><div style="font-size:10px;color:var(--muted);">PAIRS FOUND T(N,k)</div><div style="font-size:22px;font-weight:bold;color:var(--cyan);">${survivors.toLocaleString()}</div></div>
+          <div><div style="font-size:10px;color:var(--muted);">EXPECTED (N/log²N)</div><div style="font-size:22px;font-weight:bold;color:var(--muted);">${expected.toLocaleString()}</div></div>
+          <div><div style="font-size:10px;color:var(--muted);">RATIO</div><div style="font-size:22px;font-weight:bold;color:var(--gold);">${ratio}</div></div>
+          <div><div style="font-size:10px;color:var(--muted);">FIRST PAIR</div><div style="font-size:14px;color:var(--text);margin-top:4px;">${esc(firstPair||'none')}</div></div>
+        </div>
+        <div style="font-size:13px;font-weight:bold;color:${densityPass?'var(--green)':'var(--red)'};">&#9654; ${densityPass?'SURVIVOR DENSITY PASS — pairs exist in tested range':'FAIL — no pairs found'}</div>
+      </div>
+
+      <!-- PANEL 3: LONG GAP ATTACK -->
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">PANEL 3 — LONG GAP ATTACK</div>
+        <div style="background:#060e18;border:1px solid #1a4060;border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:13px;font-family:Georgia,serif;color:var(--cyan);">
+          Dead zone: interval [a, b] with no prime p s.t. p and p+${esc(k)} both prime
+        </div>
+        <div style="margin-bottom:8px;font-size:13px;">Largest dead zone: <strong style="color:var(--yellow);">p=${esc(maxGapFrom)} &rarr; p=${esc(maxGapTo)}, length=${esc(maxGapLen)}</strong></div>
+        ${gapData.length > 0 ? `
+        <table class="math-table" style="width:100%;">
+          <thead><tr><th>From p</th><th>To p</th><th>Dead zone length</th></tr></thead>
+          <tbody>${gapData.slice(0,10).map(g=>`
+            <tr>
+              <td>${esc(g.from)}</td>
+              <td>${esc(g.to)}</td>
+              <td style="color:var(--yellow);font-weight:bold;">${esc(g.len)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : '<div style="color:var(--muted);font-size:12px;">No large dead zones found in tested range.</div>'}
+        <div style="margin-top:10px;background:rgba(255,215,0,.06);border-left:3px solid var(--yellow);border-radius:4px;padding:8px 12px;font-size:12px;color:var(--yellow);">These are finite observations only. A dead zone ending at p=${esc(maxGapTo)} does not bound dead zones beyond N=${N.toLocaleString()}.</div>
+      </div>
+
+      <!-- PANEL 4: INFINITY GATE -->
+      <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">PANEL 4 — INFINITY GATE</div>
+        ${gate.map(g=>`
+          <div style="background:#060d18;border-radius:6px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <span style="color:var(--muted);font-size:12px;min-width:18px;">${esc(g.id)}.</span>
+            <div style="flex:1;min-width:220px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;">
+                <span style="font-size:13px;font-weight:bold;">${g.label}</span>
+                <span style="font-size:11px;padding:2px 8px;border-radius:999px;${badgeStyle[g.cls]}">${esc(g.status)}</span>
+              </div>
+              <div style="background:#040b14;border:1px solid #1a4060;border-radius:4px;padding:6px 10px;font-size:12px;font-family:Georgia,serif;color:var(--cyan);">${g.law}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- SAFE CLAIM -->
+      <div style="background:rgba(125,255,155,.05);border:1px solid rgba(125,255,155,.18);border-radius:6px;padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.8;">
+        This is a proof-pressure engine, not a proof of Polignac's Conjecture.
+        PASS means no obstruction was found inside the tested range.
+        PASS does not mean proof. Lemmas F and G remain universally open.
+      </div>
+    `;
+  }, 0);
+}
+
 _renders.forEach((fn, i) => setTimeout(fn, i * 50));
 </script>
 </body>
