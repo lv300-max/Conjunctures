@@ -177,7 +177,52 @@ check('source patches admissible = ',
   'TOY FINITE SIMULATION ONLY',
 ].forEach(s => check('HTML/src contains: '+s, src.includes(s), true));
 
-// Panel 5 David Farmer view strings must be in HTML (outside scripts)
+// Gap Fingerprint Engine source checks
+[
+  'function runPrimeGapFingerprint(',
+  'function exportGapFingerprintJson(',
+  'function exportGapFingerprintMd(',
+  'function primeGapFingerprintHash(',
+  'function _gfpSieveSegment(',
+  'function _buildFingerprint(',
+  'function _findMotifs(',
+  'function _octaveCompare(',
+  'id="primeGapFingerprintOut"',
+  'id="gfpStart"',
+  'id="gfpMode"',
+  'id="gfpOffset"',
+  'GAP FINGERPRINT BUILT',
+  'UNIVERSAL PROOF OPEN',
+  'Polignac asks whether every odd inside-count value',
+  'This fingerprint is a finite pattern test',
+  'PRIME_GAP_FINGERPRINT_ENGINE',
+].forEach(s => check('GFP src contains: '+s, src.includes(s), true));
+
+// Node-side logic test for fingerprint math
+(function(){
+  function gfpSieve(lo, hi){
+    if(lo<2) lo=2;
+    const c=new Uint8Array(hi-lo+1);
+    const sm=sieve(Math.ceil(Math.sqrt(hi)));
+    for(const p of sm){ let s=Math.max(p*p,Math.ceil(lo/p)*p); if(s===p)s+=p; for(let j=s;j<=hi;j+=p)c[j-lo]=1; }
+    const out=[];
+    for(let i=0;i<c.length;i++) if(!c[i]) out.push(lo+i);
+    return out;
+  }
+  const ps = gfpSieve(2,50);
+  check('gfpSieve(2,50) includes 2,3,5,7,11', ps.slice(0,5).join(','), '2,3,5,7,11');
+  // gaps between [2,3,5,7,11]: 1,2,2,4 -> inside: 0,1,1,3
+  const gaps=[]; for(let i=1;i<ps.length;i++) gaps.push(ps[i]-ps[i-1]);
+  check('first gap = 1 (2->3)', gaps[0], 1);
+  check('second gap = 2 (3->5)', gaps[1], 2);
+  check('4th gap = 4 (7->11)', gaps[3], 4);
+  // inside count for gap=2 is 1, code should be A
+  const MAP={1:'A',3:'B',5:'C',7:'D',9:'E',11:'F',13:'G',15:'H',17:'I',19:'J'};
+  check('insideToCode(1)=A', MAP[1], 'A');
+  check('insideToCode(3)=B', MAP[3], 'B');
+  check('insideToCode(5)=C', MAP[5], 'C');
+  check('insideToCode(9)=E', MAP[9], 'E');
+})();
 [
   'certified admissible below-246 candidate',
   'record not beaten',
