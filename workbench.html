@@ -631,6 +631,31 @@ The output is evidence, witness generation, and gap detection.</pre>
         </div>
         <div id="pabOut"></div>
         <div id="pabReport"></div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- BIG BULK POLIGNAC TEST                                  -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <h2 class="section-title" style="margin-top:28px;">Big Bulk Polignac Test</h2>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:12px;">
+          Sweep every even k up to K<sub>max</sub> and every N up to N<sub>max</sub> in steps.
+          Each cell runs the full Polignac pressure check.
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;">
+          <label style="font-size:13px;">N<sub>max</sub>:</label>
+          <input id="bulkNmax" type="number" value="100000" min="1000" max="1000000"
+            style="width:110px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">Step N:</label>
+          <input id="bulkStep" type="number" value="10000" min="1000" max="100000"
+            style="width:100px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <label style="font-size:13px;">K<sub>max</sub> (even):</label>
+          <input id="bulkKmax" type="number" value="200" min="2" max="2000" step="2"
+            style="width:90px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:8px;border-radius:8px;font-size:13px;" />
+          <button class="btn-gold" onclick="runBigBulkPolignac()">&#9654; Run Big Bulk Polignac Test</button>
+          <button id="bulkStopBtn" class="btn-gold" style="background:#1a0808;border:1px solid var(--red);color:var(--red);display:none;" onclick="bulkPolignacStop=true;">&#9632; Stop</button>
+        </div>
+        <div id="bulkProgress" style="font-size:12px;color:var(--muted);margin-bottom:8px;"></div>
+        <div id="bulkSummary"></div>
+        <div id="bulkTable"></div>
       </section>
 
       <iframe id="five" src="five_conjecture_workbench.html" title="ANY-N Five Conjecture Workbench"></iframe>
@@ -8712,6 +8737,234 @@ function runPolignacReviewerReport(){
       </div>
     `;
   }, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BIG BULK POLIGNAC TEST
+// ═══════════════════════════════════════════════════════════════════
+let bulkPolignacStop = false;
+
+function runBigBulkPolignac(){
+  bulkPolignacStop = false;
+  const Nmax  = Math.max(1000,  Math.min(Number(document.getElementById('bulkNmax').value)||100000,  1000000));
+  const stepN = Math.max(1000,  Math.min(Number(document.getElementById('bulkStep').value)||10000,   Nmax));
+  const Kmax  = Math.max(2,     Math.min(Number(document.getElementById('bulkKmax').value)||200,     2000));
+
+  const progEl    = document.getElementById('bulkProgress');
+  const summaryEl = document.getElementById('bulkSummary');
+  const tableEl   = document.getElementById('bulkTable');
+  const stopBtn   = document.getElementById('bulkStopBtn');
+
+  summaryEl.innerHTML = '';
+  tableEl.innerHTML   = '';
+  progEl.textContent  = 'Preparing…';
+  stopBtn.style.display = 'inline-block';
+
+  // Build (k, N) job list
+  const jobs = [];
+  for(let k = 2; k <= Kmax; k += 2)
+    for(let N = stepN; N <= Nmax; N += stepN)
+      jobs.push({ k, N });
+
+  const totalJobs = jobs.length;
+  const results   = [];
+  const CHUNK     = 40;   // jobs per setTimeout tick
+  let   idx       = 0;
+
+  // Cache sieves so we don't re-sieve the same N repeatedly
+  const sieveCache = new Map();
+  function getCachedSieve(limit){
+    if(!sieveCache.has(limit)) sieveCache.set(limit, new Set(sieve(limit)));
+    return sieveCache.get(limit);
+  }
+
+  // Small primes for obstruction test
+  const smallPrimes = [2,3,5,7,11,13,17,19,23,29,31];
+
+  function processChunk(){
+    if(bulkPolignacStop){
+      progEl.textContent = 'Stopped by user after ' + results.length + ' tests.';
+      stopBtn.style.display = 'none';
+      renderBulkOutput(results, totalJobs, true);
+      return;
+    }
+
+    const end = Math.min(idx + CHUNK, totalJobs);
+    for(let i = idx; i < end; i++){
+      const { k, N } = jobs[i];
+      const primeSetFull = getCachedSieve(N + k);
+
+      // Gather all primes <= N
+      const localPrimes = [];
+      for(const p of primeSetFull){ if(p <= N) localPrimes.push(p); }
+      localPrimes.sort((a,b) => a - b);
+
+      // T(N,k), first pair, last pair
+      let pairCount = 0, firstPair = null, lastPair = null;
+      for(const p of localPrimes){
+        if(primeSetFull.has(p + k)){
+          pairCount++;
+          if(!firstPair) firstPair = p;
+          lastPair = p;
+        }
+      }
+
+      // Local obstruction
+      const obstructionPass = smallPrimes.every(q => {
+        let blocked = 0;
+        for(let r = 0; r < q; r++) if(((r % q)*((r+k) % q)) % q === 0) blocked++;
+        return blocked < q;
+      });
+
+      // Density ratio
+      const expected = N / (Math.log(N) ** 2);
+      const ratio    = expected > 0 ? pairCount / expected : 0;
+
+      // Largest dead zone
+      let lastP = null, maxGap = 0;
+      for(const p of localPrimes){
+        if(primeSetFull.has(p + k)){
+          if(lastP !== null){ const g = p - lastP; if(g > maxGap) maxGap = g; }
+          lastP = p;
+        }
+      }
+
+      // Status
+      let status;
+      if(!obstructionPass)               status = 'FAIL';
+      else if(pairCount === 0)           status = 'WARNING';
+      else                               status = 'PASS';
+
+      results.push({ k, N, pairCount, firstPair, lastPair, ratio, maxGap, obstructionPass, status });
+    }
+    idx = end;
+
+    const pct = Math.round(idx / totalJobs * 100);
+    progEl.textContent = `Running… ${idx.toLocaleString()} / ${totalJobs.toLocaleString()} (${pct}%)`;
+
+    if(idx < totalJobs){
+      setTimeout(processChunk, 0);
+    } else {
+      stopBtn.style.display = 'none';
+      progEl.textContent = `Done — ${totalJobs.toLocaleString()} tests complete.`;
+      sieveCache.clear();
+      renderBulkOutput(results, totalJobs, false);
+    }
+  }
+
+  setTimeout(processChunk, 0);
+}
+
+function renderBulkOutput(results, totalJobs, stopped){
+  const summaryEl = document.getElementById('bulkSummary');
+  const tableEl   = document.getElementById('bulkTable');
+
+  const passCount    = results.filter(r => r.status === 'PASS').length;
+  const warnCount    = results.filter(r => r.status === 'WARNING').length;
+  const failCount    = results.filter(r => r.status === 'FAIL').length;
+
+  // Weakest k/N = lowest T(N,k) among PASS rows; among WARNING rows otherwise
+  const passRows     = results.filter(r => r.pairCount > 0);
+  const weakestRow   = passRows.length
+    ? passRows.reduce((a,b) => a.pairCount < b.pairCount ? a : b)
+    : (results.length ? results[0] : null);
+  const lowestRatio  = passRows.length
+    ? passRows.reduce((a,b) => a.ratio < b.ratio ? a : b)
+    : null;
+  const biggestGap   = results.reduce((a,b) => a.maxGap > b.maxGap ? a : b, { maxGap:0 });
+
+  summaryEl.innerHTML = `
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;">BIG BULK POLIGNAC — SUMMARY</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+        <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">TOTAL TESTS</div>
+          <div style="font-size:22px;font-weight:bold;color:var(--text);">${results.length.toLocaleString()}</div>
+        </div>
+        <div style="background:#0a2e1a;border:1px solid var(--green);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">PASS</div>
+          <div style="font-size:22px;font-weight:bold;color:var(--green);">${passCount.toLocaleString()}</div>
+        </div>
+        <div style="background:#1a1200;border:1px solid var(--yellow);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">WARNING</div>
+          <div style="font-size:22px;font-weight:bold;color:var(--yellow);">${warnCount.toLocaleString()}</div>
+        </div>
+        <div style="background:#1a0808;border:1px solid var(--red);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">FAIL</div>
+          <div style="font-size:22px;font-weight:bold;color:var(--red);">${failCount.toLocaleString()}</div>
+        </div>
+        <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">WEAKEST k</div>
+          <div style="font-size:18px;font-weight:bold;color:var(--cyan);">${weakestRow ? esc(weakestRow.k) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);">${weakestRow ? 'N='+weakestRow.N.toLocaleString()+', T='+weakestRow.pairCount : ''}</div>
+        </div>
+        <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">LOWEST DENSITY</div>
+          <div style="font-size:18px;font-weight:bold;color:var(--gold);">${lowestRatio ? lowestRatio.ratio.toFixed(4) : '—'}</div>
+          <div style="font-size:10px;color:var(--muted);">${lowestRatio ? 'k='+lowestRatio.k+', N='+lowestRatio.N.toLocaleString() : ''}</div>
+        </div>
+        <div style="background:#020812;border:1px solid var(--line);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);">BIGGEST DEAD ZONE</div>
+          <div style="font-size:18px;font-weight:bold;color:var(--yellow);">${esc(biggestGap.maxGap)}</div>
+          <div style="font-size:10px;color:var(--muted);">${biggestGap.maxGap ? 'k='+biggestGap.k+', N='+biggestGap.N.toLocaleString() : ''}</div>
+        </div>
+      </div>
+
+      <!-- Final status -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="background:#0a2e1a;border:1px solid var(--green);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:2px;">FINITE STATUS</div>
+          <div style="font-size:14px;font-weight:bold;color:var(--green);">FINITE PRESSURE TEST COMPLETE</div>
+        </div>
+        <div style="background:#1a1200;border:1px solid var(--yellow);border-radius:6px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:2px;">UNIVERSAL STATUS</div>
+          <div style="font-size:14px;font-weight:bold;color:var(--yellow);">UNIVERSAL PROOF OPEN</div>
+        </div>
+      </div>
+      <div style="background:var(--panel);border-left:3px solid var(--cyan);border-radius:4px;padding:10px 14px;font-size:12px;color:var(--muted);line-height:1.8;">
+        <strong style="color:var(--text);">BIG BULK POLIGNAC RESULT: FINITE PRESSURE TEST COMPLETE / UNIVERSAL PROOF OPEN</strong><br>
+        This is a proof-pressure engine, not a proof. PASS means no obstruction was found inside the tested range.
+        PASS does not mean proof. Lemmas F and G remain universally open.
+        ${stopped ? '<span style="color:var(--yellow);">&#9888; Run was stopped early — results are partial.</span>' : ''}
+      </div>
+    </div>
+  `;
+
+  // Table — cap display at 2000 rows to avoid DOM overload
+  const display = results.slice(0, 2000);
+  const truncated = results.length > 2000;
+
+  const statusColor = { PASS:'var(--green)', WARNING:'var(--yellow)', FAIL:'var(--red)' };
+
+  tableEl.innerHTML = `
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">RESULTS TABLE${truncated ? ' (showing first 2,000 of '+results.length.toLocaleString()+')' : ' — '+results.length.toLocaleString()+' rows'}</div>
+      <table class="math-table" style="width:100%;min-width:760px;">
+        <thead>
+          <tr>
+            <th>k</th><th>N</th><th>T(N,k)</th>
+            <th>First pair</th><th>Last pair</th>
+            <th>Density c</th><th>Dead zone</th>
+            <th>Obstruction</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${display.map(r => `
+            <tr>
+              <td>${esc(r.k)}</td>
+              <td>${r.N.toLocaleString()}</td>
+              <td style="color:var(--cyan);font-weight:bold;">${r.pairCount.toLocaleString()}</td>
+              <td style="color:var(--muted);font-size:11px;">${r.firstPair !== null ? '('+esc(r.firstPair)+', '+(r.firstPair+r.k)+')' : '—'}</td>
+              <td style="color:var(--muted);font-size:11px;">${r.lastPair  !== null ? '('+esc(r.lastPair)+', '+(r.lastPair+r.k)+')' : '—'}</td>
+              <td style="color:var(--gold);">${r.ratio.toFixed(4)}</td>
+              <td style="color:var(--yellow);">${esc(r.maxGap)}</td>
+              <td><span class="status ${r.obstructionPass?'pass':'fail'}" style="font-size:10px;">${r.obstructionPass?'PASS':'FAIL'}</span></td>
+              <td><span style="font-size:11px;font-weight:bold;color:${statusColor[r.status]};">${esc(r.status)}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 _renders.forEach((fn, i) => setTimeout(fn, i * 50));
