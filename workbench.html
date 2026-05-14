@@ -1159,6 +1159,19 @@ The output is evidence, witness generation, and gap detection.</pre>
             style="width:55px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
           <button class="btn-gold" onclick="runToySieveWeightSimulation()" style="background:#082010;border:1px solid var(--green);color:var(--green);">&#9654; Run Toy Weight Simulation</button>
         </div>
+        <!-- HL Constant Compare + Failure Simulator controls -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;padding:10px 12px;background:#060e18;border:1px solid #1a4060;border-radius:8px;">
+          <label style="font-size:12px;color:var(--muted);">HL even gap k (default 2):</label>
+          <input id="hlcGapK" type="number" value="2" min="2" max="100" step="2"
+            style="width:65px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
+          <label style="font-size:12px;color:var(--muted);">scan N:</label>
+          <input id="hlcScanN" type="number" value="100000" min="1000" max="5000000"
+            style="width:80px;border:1px solid #1f6f94;background:#020812;color:var(--text);padding:6px;border-radius:6px;font-size:12px;" />
+          <button class="btn-gold" onclick="runHLConstantCompare()" style="background:#0d1a30;border:1px solid #cc88ff;color:#cc88ff;">&#9654; HL Constant Compare</button>
+          <button class="btn-gold" onclick="runFailureSimulator()" style="background:#200808;border:1px solid var(--red);color:var(--red);">&#9654; Failure Simulator</button>
+        </div>
+        <div id="hlcOut" style="margin-bottom:10px;"></div>
+        <div id="failSimOut" style="margin-bottom:10px;"></div>
         <div id="maynardProofCertOut"></div>
         <!-- static honesty for self-test scan -->
         <div style="font-size:10px;color:var(--muted);margin-top:4px;">
@@ -1207,6 +1220,26 @@ The output is evidence, witness generation, and gap detection.</pre>
         <div style="font-size:10px;color:var(--muted);margin-top:4px;">
           This fingerprint is a finite pattern test. It does not prove infinite repetition.
           Polignac asks whether every odd inside-count value 1,3,5,7,&hellip; appears infinitely often.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- FINGERPRINT BATCH RUNNER                                           -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div style="margin-top:18px;border-top:1px solid #1a4060;padding-top:14px;">
+          <div style="font-size:13px;font-weight:bold;color:var(--cyan);margin-bottom:8px;">FINGERPRINT BATCH RUNNER</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+            Runs 5 preset fingerprint scans and tracks shared motifs across all packets.
+            <strong style="color:var(--yellow);">Shared motifs are finite evidence only. Not proof of infinite repetition.</strong>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <button class="btn-gold" onclick="runFingerprintBatch()" style="background:#061820;border:1px solid var(--cyan);color:var(--cyan);">&#9654; Run Fingerprint Batch</button>
+            <button class="btn-gold" onclick="exportFingerprintBatchJson()" style="background:#1d1705;border:1px solid var(--gold);color:var(--gold);">&#128196; Export Batch JSON</button>
+            <button class="btn-gold" onclick="exportFingerprintBatchMd()" style="background:#0d1f2d;border:1px solid var(--cyan);color:var(--cyan);">&#128196; Export Batch .md</button>
+          </div>
+          <div id="fingerprintBatchOut"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px;">
+            FINGERPRINT BATCH BUILT / SHARED MOTIFS TRACKED / FINITE PATTERN ONLY
+          </div>
         </div>
 
       </section>
@@ -14897,6 +14930,499 @@ function exportGapFingerprintMd(){
   a.href = URL.createObjectURL(blob);
   a.download = 'prime_gap_fingerprint_'+d.timestamp.slice(0,10)+'.md';
   a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HL CONSTANT COMPARE
+// Measures c(k) = #{p<=N : p+k prime} / (N/ln²N) and compares to HL twin-prime constant C2.
+// ═══════════════════════════════════════════════════════════════════
+
+function _hlConstant(k){
+  // Hardy-Littlewood singular series for even gap k:
+  // C(k) = 2*C2 * prod_{p|k, p>2} (p-1)/(p-2)
+  // where C2 = prod_{p>2} p(p-2)/(p-1)^2 ≈ 0.6601618...
+  const C2 = 0.6601618158468696;
+  if(k % 2 !== 0) return 0; // only defined for even gaps
+  const smallPrimes = [3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  let prod = 1;
+  for(const p of smallPrimes){
+    if(k % p === 0) prod *= (p-1)/(p-2);
+  }
+  return 2 * C2 * prod;
+}
+
+function runHLConstantCompare(){
+  const out   = document.getElementById('hlcOut');
+  const k     = parseInt(document.getElementById('hlcGapK').value)||2;
+  const N     = parseInt(document.getElementById('hlcScanN').value)||100000;
+  out.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:6px;">Running HL compare for gap k='+k+', N='+N+'…</div>';
+  if(k % 2 !== 0){
+    out.innerHTML = '<div style="color:var(--red);font-size:12px;padding:6px;">k must be even for HL constant.</div>';
+    return;
+  }
+  setTimeout(()=>{
+    // Sieve up to N+k
+    const comp = new Uint8Array(N+k+2);
+    for(let i=2;i*i<=N+k+1;i++) if(!comp[i]) for(let j=i*i;j<=N+k+1;j+=i) comp[j]=1;
+    let count=0;
+    for(let p=2;p<=N;p++){
+      if(!comp[p] && !comp[p+k]) count++;
+    }
+    // Measured: count / (N / ln^2(N))
+    const lnN = Math.log(N);
+    const pi2approx = N/(lnN*lnN);
+    const measured  = count / pi2approx;
+    const hlExpect  = _hlConstant(k);
+    const ratio     = hlExpect > 0 ? (measured/hlExpect) : 0;
+    const pct       = (ratio*100).toFixed(2);
+    const col       = Math.abs(ratio-1)<0.25 ? 'var(--green)' : Math.abs(ratio-1)<0.5 ? 'var(--yellow)' : 'var(--red)';
+
+    // Bar chart: measured vs expected
+    const barW = 300;
+    const mBar = Math.min(barW, Math.round(barW * Math.min(measured,hlExpect*2) / (hlExpect*2)));
+    const eBar = Math.round(barW * Math.min(hlExpect,hlExpect*2) / (hlExpect*2));
+
+    out.innerHTML = `
+    <div style="background:#020812;border:1px solid #cc88ff;border-radius:8px;padding:14px;">
+      <div style="font-size:13px;font-weight:bold;color:#cc88ff;margin-bottom:10px;">HL CONSTANT COMPARE &mdash; gap k = ${k}, N = ${N.toLocaleString()}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div style="background:#060e18;border:1px solid var(--line);border-radius:6px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--muted);">Prime pairs (p, p+${k}) found</div>
+          <div style="font-size:20px;font-weight:bold;color:var(--cyan);">${count.toLocaleString()}</div>
+        </div>
+        <div style="background:#060e18;border:1px solid var(--line);border-radius:6px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--muted);">Measured c(k)</div>
+          <div style="font-size:20px;font-weight:bold;color:var(--cyan);">${measured.toFixed(4)}</div>
+        </div>
+        <div style="background:#060e18;border:1px solid var(--line);border-radius:6px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--muted);">HL expected C(k)</div>
+          <div style="font-size:20px;font-weight:bold;color:#cc88ff;">${hlExpect.toFixed(4)}</div>
+        </div>
+        <div style="background:#060e18;border:1px solid var(--line);border-radius:6px;padding:8px 14px;">
+          <div style="font-size:10px;color:var(--muted);">Ratio measured/expected</div>
+          <div style="font-size:20px;font-weight:bold;color:${col};">${ratio.toFixed(4)} (${pct}%)</div>
+        </div>
+      </div>
+      <!-- Bar chart -->
+      <div style="margin-bottom:8px;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Measured vs HL Expected (scaled to expected):</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <div style="font-size:10px;color:var(--cyan);width:70px;">Measured</div>
+          <div style="height:14px;background:var(--cyan);border-radius:3px;width:${mBar}px;"></div>
+          <div style="font-size:10px;color:var(--muted);">${measured.toFixed(4)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:10px;color:#cc88ff;width:70px;">HL C(${k})</div>
+          <div style="height:14px;background:#cc88ff;border-radius:3px;width:${eBar}px;"></div>
+          <div style="font-size:10px;color:var(--muted);">${hlExpect.toFixed(4)}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);background:#060e18;border:1px solid var(--line);border-radius:5px;padding:7px 10px;">
+        Formula: C(k) = 2 &middot; C₂ &middot; &prod;<sub>p|k, p&gt;2</sub>(p&minus;1)/(p&minus;2) &nbsp;&nbsp; C₂ ≈ 0.6601618
+        &nbsp;&nbsp;—&nbsp;&nbsp;
+        Measured from ${N.toLocaleString()} primes. As N→∞, measured/expected → 1 if HL is correct.
+        <strong style="color:var(--yellow);"> HL conjecture is OPEN. This is finite evidence only.</strong>
+      </div>
+    </div>`;
+  }, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FAILURE SIMULATOR
+// Shows what a fake "stops-forever" world looks like vs real prime-pair growth.
+// ═══════════════════════════════════════════════════════════════════
+
+function runFailureSimulator(){
+  const out = document.getElementById('failSimOut');
+  out.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:6px;">Building failure simulation…</div>';
+  setTimeout(()=>{
+    const k = parseInt(document.getElementById('hlcGapK').value)||2;
+    const checkpoints = [1000,2000,5000,10000,20000,50000,100000,200000,500000];
+
+    // Sieve up to max checkpoint + k
+    const MAX = checkpoints[checkpoints.length-1];
+    const comp = new Uint8Array(MAX+k+2);
+    for(let i=2;i*i<=MAX+k+1;i++) if(!comp[i]) for(let j=i*i;j<=MAX+k+1;j+=i) comp[j]=1;
+
+    const realData=[], fakeData=[];
+    let cumReal=0;
+    for(const N of checkpoints){
+      for(let p=Math.max(2, (checkpoints[checkpoints.indexOf(N)-1]||0)+1); p<=N; p++){
+        if(!comp[p] && !comp[p+k]) cumReal++;
+      }
+      const lnN = Math.log(N);
+      const hlC = _hlConstant(k);
+      // Real: cumulative actual count
+      realData.push({N, count: cumReal});
+      // Fake "stops at N=50000": freeze count at that value
+      const fakeCount = cumReal <= 0 ? 0 : (N <= 50000 ? cumReal : realData.find(d=>d.N===50000)?.count || cumReal);
+      fakeData.push({N, count: fakeCount});
+    }
+
+    // ASCII-style chart
+    const maxCount = Math.max(...realData.map(d=>d.count));
+    const chartH = 8;
+    const barMax = 40;
+
+    const rows = realData.map((rd,i)=>{
+      const fd = fakeData[i];
+      const rBar = maxCount>0?Math.round((rd.count/maxCount)*barMax):0;
+      const fBar = maxCount>0?Math.round((fd.count/maxCount)*barMax):0;
+      const rBarHtml = `<div style="height:10px;background:var(--cyan);border-radius:2px;width:${rBar*6}px;display:inline-block;"></div>`;
+      const fBarHtml = `<div style="height:10px;background:var(--red);border-radius:2px;width:${fBar*6}px;display:inline-block;opacity:0.6;"></div>`;
+      const diverge  = rd.count !== fd.count;
+      return `<tr>
+        <td style="font-size:10px;">${rd.N.toLocaleString()}</td>
+        <td>${rBarHtml} <span style="font-size:10px;color:var(--cyan);">${rd.count}</span></td>
+        <td>${fBarHtml} <span style="font-size:10px;color:var(--red);">${fd.count}</span></td>
+        <td style="font-size:10px;color:${diverge?'var(--yellow)':'var(--muted)'}">${diverge?'⚠ diverged':'—'}</td>
+      </tr>`;
+    }).join('');
+
+    out.innerHTML = `
+    <div style="background:#020812;border:1px solid var(--red);border-radius:8px;padding:14px;">
+      <div style="font-size:13px;font-weight:bold;color:var(--red);margin-bottom:6px;">FAILURE SIMULATOR &mdash; gap k = ${k}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+        <span style="color:var(--cyan);">Cyan = real growth</span> &nbsp;|&nbsp;
+        <span style="color:var(--red);">Red = fake world (stops at N=50,000)</span>
+        &nbsp;&mdash;&nbsp; If Polignac fails, the real line would eventually flatten like the red line.
+        Finite scanning alone cannot tell these apart beyond the scan window.
+        <strong style="color:var(--yellow);">This does NOT prove Polignac. FINITE EVIDENCE ONLY.</strong>
+      </div>
+      <table class="math-table" style="width:100%;font-size:11px;">
+        <thead><tr><th>N</th><th>Real count (p, p+${k})</th><th>Fake “stops” count</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);">
+        The fake world matches real data up to the cutoff — finite tests cannot distinguish them.
+        Only an analytic proof (Polignac / HL) can certify infinite growth.
+      </div>
+    </div>`;
+  }, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FINGERPRINT BATCH RUNNER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const _FPB_PRESETS = [
+  { name:'Base fabric',          start:1,       rangeSize:10000,  chunkSize:1000,  mode:'code',      compareOffset:10000  },
+  { name:'Weakest gap zone',     start:100000,  rangeSize:100000, chunkSize:5000,  mode:'code',      compareOffset:100000 },
+  { name:'Big pressure zone',    start:1000000, rangeSize:100000, chunkSize:5000,  mode:'code',      compareOffset:1000000},
+  { name:'Largest dead-zone area',start:9990000,rangeSize:100000, chunkSize:5000,  mode:'code',      compareOffset:100000 },
+  { name:'Hash-only fast scan',  start:1,       rangeSize:1000000,chunkSize:10000, mode:'hash',      compareOffset:1000000},
+];
+
+window._fingerprintBatchData = null;
+
+function _fpbSieve(lo, hi){
+  if(lo < 2) lo = 2;
+  const c = new Uint8Array(hi - lo + 1);
+  const sm = sieve(Math.ceil(Math.sqrt(hi)));
+  for(const p of sm){
+    let s = Math.max(p*p, Math.ceil(lo/p)*p);
+    if(s === p) s += p;
+    for(let j=s;j<=hi;j+=p) c[j-lo]=1;
+  }
+  const out=[];
+  for(let i=0;i<c.length;i++) if(!c[i]) out.push(lo+i);
+  return out;
+}
+
+function _fpbBuildInsideCounts(primes){
+  const inside=[];
+  for(let i=1;i<primes.length;i++){
+    const gap = primes[i]-primes[i-1];
+    inside.push(gap-1);
+  }
+  return inside;
+}
+
+function _fpbInsideCode(v){
+  const MAP={1:'A',3:'B',5:'C',7:'D',9:'E',11:'F',13:'G',15:'H',17:'I',19:'J'};
+  return MAP[v] !== undefined ? MAP[v] : 'X'+v;
+}
+
+function _fpbFindMotifs(arr, len, top){
+  const counts={};
+  for(let i=0;i<=arr.length-len;i++){
+    const key=arr.slice(i,i+len).join(',');
+    counts[key]=(counts[key]||0)+1;
+  }
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,top).map(([k,v])=>({seq:k,count:v}));
+}
+
+function _fpbHash(str){
+  let h=0x811c9dc5;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=(h*0x01000193)>>>0;
+  }
+  return h.toString(16).padStart(8,'0');
+}
+
+function runFingerprintBatch(){
+  const out = document.getElementById('fingerprintBatchOut');
+  out.innerHTML = '<div style="color:var(--cyan);font-size:12px;padding:8px;">Starting batch…</div>';
+  window._fingerprintBatchData = null;
+
+  const results = [];
+  let idx = 0;
+
+  function _progress(msg){
+    out.innerHTML = `<div style="background:#020812;border:1px solid var(--cyan);border-radius:8px;padding:12px;">
+      <div style="font-size:12px;color:var(--cyan);margin-bottom:6px;">${msg}</div>
+      <div style="height:6px;background:#061820;border-radius:3px;">
+        <div style="height:6px;background:var(--cyan);border-radius:3px;width:${Math.round((idx/_FPB_PRESETS.length)*100)}%;"></div>
+      </div>
+    </div>`;
+  }
+
+  function _runNext(){
+    if(idx >= _FPB_PRESETS.length){
+      _fpbFinish(results, out);
+      return;
+    }
+    const preset = _FPB_PRESETS[idx];
+    idx++;
+    _progress(`Running batch item ${idx}/${_FPB_PRESETS.length}: ${preset.name}`);
+
+    setTimeout(()=>{
+      try{
+        const lo = preset.start;
+        const hi = lo + preset.rangeSize - 1;
+
+        if(preset.mode === 'hash'){
+          // hash-only: sieve in one shot but guard time
+          const t0 = Date.now();
+          let primes;
+          try { primes = _fpbSieve(lo, hi); } catch(e){ primes = []; }
+          const elapsed = Date.now() - t0;
+          const warning = elapsed > 8000 ? 'WARNING: slow scan ('+elapsed+'ms)' : null;
+          const inside  = _fpbBuildInsideCounts(primes);
+          const codeStr  = inside.map(_fpbInsideCode).join('');
+          const h = _fpbHash(codeStr || 'HASH_ONLY_'+lo);
+          results.push({
+            name: preset.name, start:lo, end:hi, rangeSize:preset.rangeSize,
+            mode:'hash', primeCount:primes.length, gapCount:inside.length,
+            mostCommonInside:null, largestInside:null, largestDeadZone:null,
+            first50Inside:[], first100Symbols:'HASH-ONLY',
+            motifs3:[], motifs4:[], motifs5:[],
+            octaveMatchPct:null, hash:h,
+            status: warning||'OK', warning,
+          });
+        } else {
+          const primes = _fpbSieve(lo, hi);
+          const inside = _fpbBuildInsideCounts(primes);
+
+          // most common inside
+          const freq={};
+          let maxF=0, mostCommon=null, largest=0;
+          for(const v of inside){
+            freq[v]=(freq[v]||0)+1;
+            if(freq[v]>maxF){maxF=freq[v];mostCommon=v;}
+            if(v>largest) largest=v;
+          }
+
+          // largest dead zone = max gap-1
+          const largestDeadZone = largest;
+
+          const first50  = inside.slice(0,50);
+          const codes    = inside.map(_fpbInsideCode);
+          const first100 = codes.slice(0,100).join('');
+
+          const motifs3 = _fpbFindMotifs(inside,3,5);
+          const motifs4 = _fpbFindMotifs(inside,4,5);
+          const motifs5 = _fpbFindMotifs(inside,5,5);
+
+          // octave compare: compare [lo..hi/2] vs [hi/2..hi]
+          const mid = Math.floor((lo+hi)/2);
+          const ins1 = _fpbBuildInsideCounts(_fpbSieve(lo, mid));
+          const ins2 = _fpbBuildInsideCounts(_fpbSieve(mid+1, hi));
+          const minLen = Math.min(ins1.length, ins2.length);
+          let matchCount=0;
+          for(let i=0;i<minLen;i++) if(ins1[i]===ins2[i]) matchCount++;
+          const octavePct = minLen>0 ? Math.round((matchCount/minLen)*1000)/10 : 0;
+
+          const codeStr = codes.join('');
+          const h = _fpbHash(codeStr);
+
+          results.push({
+            name:preset.name, start:lo, end:hi, rangeSize:preset.rangeSize,
+            mode:'code', primeCount:primes.length, gapCount:inside.length,
+            mostCommonInside:mostCommon, largestInside:largest, largestDeadZone,
+            first50Inside:first50, first100Symbols:first100,
+            motifs3, motifs4, motifs5,
+            octaveMatchPct:octavePct, hash:h, status:'OK', warning:null,
+          });
+        }
+      } catch(e){
+        results.push({ name:preset.name, status:'ERROR: '+e.message, error:true });
+      }
+      setTimeout(_runNext, 0);
+    }, 0);
+  }
+
+  _runNext();
+}
+
+function _fpbFinish(results, out){
+  // ── Shared motif tracker (non-hash runs) ──
+  const nonHash = results.filter(r=>r.mode==='code' && !r.error);
+  const motifMap={}; // key -> {runs:Set, total, strongest}
+
+  function _collectMotifs(r, motifs, len){
+    for(const m of motifs){
+      const k = 'L'+len+':'+m.seq;
+      if(!motifMap[k]) motifMap[k]={seq:m.seq,len,runs:new Set(),total:0,strongest:r.name};
+      motifMap[k].runs.add(r.name);
+      motifMap[k].total += m.count;
+      if(m.count > (motifMap[k]._topCount||0)){
+        motifMap[k]._topCount=m.count;
+        motifMap[k].strongest=r.name;
+      }
+    }
+  }
+
+  for(const r of nonHash){
+    _collectMotifs(r, r.motifs3||[], 3);
+    _collectMotifs(r, r.motifs4||[], 4);
+    _collectMotifs(r, r.motifs5||[], 5);
+  }
+
+  const nRuns = nonHash.length;
+  const sharedMotifs = Object.values(motifMap)
+    .map(m=>({...m, runCount:m.runs.size, status: m.runs.size===nRuns&&nRuns>1?'CORE STITCH':m.runs.size>1?'COMMON':'LOCAL'}))
+    .sort((a,b)=>b.runCount-a.runCount||b.total-a.total)
+    .slice(0,20);
+
+  // ── Summary ──
+  const completed = results.filter(r=>!r.error).length;
+  const failed    = results.filter(r=>r.error).length;
+  const totalPrimes = results.reduce((s,r)=>s+(r.primeCount||0),0);
+  const totalGaps   = results.reduce((s,r)=>s+(r.gapCount||0),0);
+  const strongest   = sharedMotifs[0]||null;
+  const octaves     = nonHash.map(r=>r.octaveMatchPct).filter(v=>v!=null);
+  const highOct = octaves.length ? Math.max(...octaves) : null;
+  const lowOct  = octaves.length ? Math.min(...octaves) : null;
+
+  const summary = {
+    totalRuns:results.length, completed, failed,
+    totalPrimesScanned:totalPrimes, totalGapsCounted:totalGaps,
+    strongestSharedMotif: strongest ? strongest.seq : null,
+    highestOctaveMatchPct: highOct, lowestOctaveMatchPct: lowOct,
+    finalLabel:'FINGERPRINT BATCH BUILT / SHARED MOTIFS TRACKED / FINITE PATTERN ONLY',
+  };
+
+  window._fingerprintBatchData = { results, sharedMotifs, summary };
+
+  // ── Render ──
+  const runsHtml = results.map(r=>{
+    if(r.error) return `<tr><td>${esc(r.name)}</td><td colspan="7" style="color:var(--red);">${esc(r.status)}</td></tr>`;
+    return `<tr>
+      <td style="font-size:10px;">${esc(r.name)}</td>
+      <td>${r.primeCount!=null?r.primeCount.toLocaleString():'-'}</td>
+      <td>${r.gapCount!=null?r.gapCount.toLocaleString():'-'}</td>
+      <td>${r.mostCommonInside!=null?r.mostCommonInside:'-'}</td>
+      <td>${r.largestDeadZone!=null?r.largestDeadZone:'-'}</td>
+      <td>${r.octaveMatchPct!=null?r.octaveMatchPct+'%':'-'}</td>
+      <td style="font-size:9px;color:var(--muted);word-break:break-all;max-width:120px;">${r.first100Symbols?r.first100Symbols.slice(0,60)+'…':'-'}</td>
+      <td style="color:${r.warning?'var(--yellow)':'var(--green)'}">${r.status}</td>
+    </tr>`;
+  }).join('');
+
+  const motifsHtml = sharedMotifs.length ? sharedMotifs.map(m=>{
+    const scol = m.status==='CORE STITCH'?'var(--cyan)':m.status==='COMMON'?'var(--yellow)':'var(--muted)';
+    return `<tr>
+      <td style="font-family:monospace;font-size:10px;">${esc(m.seq)}</td>
+      <td>${m.len}</td>
+      <td>${m.runCount}</td>
+      <td>${m.total}</td>
+      <td style="font-size:10px;">${esc(m.strongest)}</td>
+      <td style="color:${scol};font-size:10px;font-weight:bold;">${m.status}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="color:var(--muted);">No motifs collected</td></tr>';
+
+  out.innerHTML = `
+  <div class="fingerprint-batch-wrapper" style="background:#020812;border:1px solid var(--cyan);border-radius:8px;padding:14px;">
+    <div style="font-size:13px;font-weight:bold;color:var(--cyan);margin-bottom:4px;">FINGERPRINT BATCH RUNNER &mdash; ${results.length} runs</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">Shared motifs are finite evidence only. Not proof of infinite repetition. FINITE PATTERN ONLY.</div>
+
+    <!-- Run table -->
+    <div style="font-size:11px;font-weight:bold;color:var(--text);margin-bottom:4px;">BATCH RUNS</div>
+    <div style="overflow-x:auto;margin-bottom:12px;">
+    <table class="math-table" style="width:100%;font-size:10px;">
+      <thead><tr><th>Name</th><th>Primes</th><th>Gaps</th><th>Most common &Delta;</th><th>Largest dead zone</th><th>Octave match%</th><th>First symbols (60)</th><th>Status</th></tr></thead>
+      <tbody>${runsHtml}</tbody>
+    </table>
+    </div>
+
+    <!-- Shared motifs -->
+    <div style="font-size:11px;font-weight:bold;color:var(--text);margin-bottom:4px;">TOP SHARED MOTIFS (across non-hash runs)</div>
+    <div style="overflow-x:auto;margin-bottom:12px;">
+    <table class="math-table" style="width:100%;font-size:10px;">
+      <thead><tr><th>Motif (inside counts)</th><th>Len</th><th>Runs in</th><th>Total count</th><th>Strongest run</th><th>Status</th></tr></thead>
+      <tbody>${motifsHtml}</tbody>
+    </table>
+    </div>
+
+    <!-- Summary -->
+    <div style="font-size:11px;font-weight:bold;color:var(--text);margin-bottom:6px;">COMBINED SUMMARY</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+      ${[['Total runs',summary.totalRuns],['Completed',summary.completed],['Failed',summary.failed],
+         ['Total primes',summary.totalPrimesScanned.toLocaleString()],['Total gaps',summary.totalGapsCounted.toLocaleString()],
+         ['Strongest motif',summary.strongestSharedMotif||'—'],
+         ['Highest octave%',highOct!=null?highOct+'%':'—'],['Lowest octave%',lowOct!=null?lowOct+'%':'—']]
+        .map(([lbl,val])=>`<div style="background:#060e18;border:1px solid var(--line);border-radius:5px;padding:6px 10px;"><div style="font-size:9px;color:var(--muted);">${lbl}</div><div style="font-size:13px;font-weight:bold;color:var(--cyan);">${val}</div></div>`).join('')}
+    </div>
+    <div style="font-size:11px;font-weight:bold;color:var(--green);border:1px solid var(--green);border-radius:5px;padding:6px 10px;display:inline-block;">
+      ${summary.finalLabel}
+    </div>
+  </div>`;
+}
+
+function exportFingerprintBatchJson(){
+  const d = window._fingerprintBatchData;
+  if(!d){ alert('Run batch first.'); return; }
+  const payload = {
+    engine:'FINGERPRINT_BATCH_RUNNER',
+    timestamp: new Date().toISOString(),
+    runs: d.results,
+    sharedMotifs: d.sharedMotifs,
+    summary: d.summary,
+    proofStatus:{ finitePatternEvidence:'STRONG', universalProof:'OPEN' },
+    hash: _fpbHash(JSON.stringify(d.summary)),
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='fingerprint_batch_'+Date.now()+'.json'; a.click();
+}
+
+function exportFingerprintBatchMd(){
+  const d = window._fingerprintBatchData;
+  if(!d){ alert('Run batch first.'); return; }
+  const s = d.summary;
+  let md = `# FINGERPRINT BATCH REPORT\n\n`;
+  md += `## Safe Claim\nFinite pattern only. Not proof. Shared motifs are finite evidence only.\n\n`;
+  md += `## Runs\n| Name | Primes | Gaps | Most common Δ | Largest dead zone | Octave% | Status |\n|---|---|---|---|---|---|---|\n`;
+  for(const r of d.results){
+    if(r.error){ md += `| ${r.name} | ERROR | — | — | — | — | ${r.status} |\n`; continue; }
+    md += `| ${r.name} | ${r.primeCount??'-'} | ${r.gapCount??'-'} | ${r.mostCommonInside??'-'} | ${r.largestDeadZone??'-'} | ${r.octaveMatchPct!=null?r.octaveMatchPct+'%':'-'} | ${r.status} |\n`;
+  }
+  md += `\n## Shared Motifs\n| Motif | Len | Runs | Total | Strongest | Status |\n|---|---|---|---|---|---|\n`;
+  for(const m of d.sharedMotifs){
+    md += `| ${m.seq} | ${m.len} | ${m.runCount} | ${m.total} | ${m.strongest} | ${m.status} |\n`;
+  }
+  md += `\n## Summary\n`;
+  md += `- Total runs: ${s.totalRuns}\n- Completed: ${s.completed}\n- Failed: ${s.failed}\n`;
+  md += `- Total primes scanned: ${s.totalPrimesScanned}\n- Total gaps counted: ${s.totalGapsCounted}\n`;
+  md += `- Strongest shared motif: ${s.strongestSharedMotif||'—'}\n`;
+  md += `- Highest octave match%: ${s.highestOctaveMatchPct!=null?s.highestOctaveMatchPct+'%':'—'}\n`;
+  md += `- Lowest octave match%: ${s.lowestOctaveMatchPct!=null?s.lowestOctaveMatchPct+'%':'—'}\n`;
+  md += `\n## Final Label\n${s.finalLabel}\n`;
+  const blob = new Blob([md],{type:'text/markdown'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='fingerprint_batch_'+Date.now()+'.md'; a.click();
 }
 
 // Run self-tests after DOM is ready, non-blocking

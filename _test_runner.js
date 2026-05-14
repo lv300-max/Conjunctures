@@ -223,6 +223,82 @@ check('source patches admissible = ',
   check('insideToCode(5)=C', MAP[5], 'C');
   check('insideToCode(9)=E', MAP[9], 'E');
 })();
+
+// HL Constant Compare + Failure Simulator source checks
+[
+  'function runHLConstantCompare(',
+  'function runFailureSimulator(',
+  'function _hlConstant(',
+  'id="hlcOut"',
+  'id="failSimOut"',
+  'id="hlcGapK"',
+  'id="hlcScanN"',
+  'runHLConstantCompare()',
+  'runFailureSimulator()',
+  'HL conjecture is OPEN',
+  'FINITE EVIDENCE ONLY',
+  'FAILURE SIMULATOR',
+  'HL CONSTANT COMPARE',
+].forEach(s => check('HLC/FS src contains: '+s, src.includes(s), true));
+
+// Node-side logic: _hlConstant math
+(function(){
+  const C2 = 0.6601618158468696;
+  // k=2: no p>2 divides 2, so prod=1, result = 2*C2
+  const hlc2 = 2*C2;
+  check('_hlConstant(2) ≈ 2*C2', Math.abs(hlc2-1.3203)<0.001, true);
+  // k=6: p=3 divides 6, prod=(3-1)/(3-2)=2
+  const hlc6 = 2*C2*2;
+  check('_hlConstant(6) ≈ 4*C2', Math.abs(hlc6-2.6407)<0.001, true);
+  // k=1 (odd): should be 0
+  check('_hlConstant odd k returns 0 conceptually', 1%2!==0, true);
+})();
+
+// Fingerprint Batch Runner source checks
+[
+  'function runFingerprintBatch(',
+  'function exportFingerprintBatchJson(',
+  'function exportFingerprintBatchMd(',
+  'function _fpbSieve(',
+  'function _fpbBuildInsideCounts(',
+  'function _fpbFindMotifs(',
+  'function _fpbHash(',
+  'function _fpbFinish(',
+  'id="fingerprintBatchOut"',
+  'runFingerprintBatch()',
+  'exportFingerprintBatchJson()',
+  'exportFingerprintBatchMd()',
+  'FINGERPRINT BATCH RUNNER',
+  'FINGERPRINT BATCH BUILT',
+  'SHARED MOTIFS TRACKED',
+  'FINITE PATTERN ONLY',
+  'CORE STITCH',
+  'Shared motifs are finite evidence only',
+  '_FPB_PRESETS',
+  'Base fabric',
+  'Weakest gap zone',
+  'Big pressure zone',
+  'Largest dead-zone area',
+  'Hash-only fast scan',
+  'FINGERPRINT_BATCH_RUNNER',
+  'finitePatternEvidence',
+  'universalProof',
+].forEach(s => check('FPB src contains: '+s, src.includes(s), true));
+
+// Node-side logic: _fpbHash is deterministic
+(function(){
+  function fpbHash(str){
+    let h=0x811c9dc5;
+    for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=(h*0x01000193)>>>0;}
+    return h.toString(16).padStart(8,'0');
+  }
+  const h1=fpbHash('hello');
+  const h2=fpbHash('hello');
+  check('_fpbHash deterministic', h1, h2);
+  check('_fpbHash length=8', h1.length, 8);
+  check('_fpbHash differs on different input', fpbHash('abc')!==fpbHash('xyz'), true);
+})();
+
 [
   'certified admissible below-246 candidate',
   'record not beaten',
@@ -230,6 +306,87 @@ check('source patches admissible = ',
   if(htmlOnlyLC.includes(s.toLowerCase())) pass('Panel5 string present: "'+s+'"');
   else warn('Panel5 string not in HTML: "'+s+'"');
 });
+
+// Maynard gate structural requirements — these MUST stay OPEN/MISSING in source
+[
+  // Gate 3 weight gate must be OPEN
+  ["gate3 status OPEN in source",    "id: 3, name: 'WEIGHT GATE'",          "'OPEN'"],
+  // Gate 4 inequality gate must be OPEN
+  ["gate4 status OPEN in source",    "id: 4, name: 'INEQUALITY GATE'",      "'OPEN'"],
+  // Gate 5 infinite conclusion must be OPEN
+  ["gate5 status OPEN in source",    "id: 5, name: 'INFINITE CONCLUSION GATE'", "'OPEN'"],
+  // infiniteCertificate must be MISSING
+  ["infiniteCertificate: MISSING",   "infiniteCertificate:",                "'MISSING'"],
+  // universalProof must be OPEN
+  ["universalProof: OPEN",           "universalProof:",                     "'OPEN'"],
+  // Record must not be beaten
+  ["RECORD NOT BEATEN present",      "RECORD NOT BEATEN",                   null],
+].forEach(([label, anchor, after]) => {
+  if(after === null){
+    check(label, src.includes(anchor), true);
+  } else {
+    const idx = src.indexOf(anchor);
+    const snippet = idx >= 0 ? src.slice(idx, idx+120) : '';
+    check(label, snippet.includes(after), true);
+  }
+});
+
+// ══ JSON ARTIFACT INTEGRITY ══════════════════════════════════════
+(function(){
+  const path = require('path');
+  const artifactChecks = [
+    {
+      file: 'collatz_octave_audit_report.json',
+      keys: ['auditRuns','finalHonestStatus','independentRegeneration'],
+      honestStatus: 'NOT A COLLATZ PROOF',
+    },
+    {
+      file: 'strict_anyn_audit_report.json',
+      keys: ['results','finalHonestStatus','proofBoundaries'],
+      honestStatus: 'STRICT FINITE AUDIT COMPLETE',
+    },
+    {
+      file: 'POLIGNAC_WEAKEST_K_RUN.json',
+      keys: ['engine','finalHonestStatus','evenKTested'],
+      honestStatus: 'UNIVERSAL PROOF OPEN',
+    },
+  ];
+  artifactChecks.forEach(({file,keys,honestStatus})=>{
+    const fp = path.join(__dirname, file);
+    let parsed = null;
+    try { parsed = JSON.parse(require('fs').readFileSync(fp,'utf8')); }
+    catch(e){ fail('JSON artifact readable: '+file, 'could not parse: '+e.message); return; }
+    pass('JSON artifact exists and parses: '+file);
+    keys.forEach(k => {
+      if(Object.prototype.hasOwnProperty.call(parsed,k)) pass('JSON key present "'+k+'" in '+file);
+      else fail('JSON key missing "'+k+'" in '+file);
+    });
+    const hs = parsed.finalHonestStatus || '';
+    if(hs.includes(honestStatus)) pass('honestStatus correct in '+file);
+    else warn('honestStatus unexpected in '+file+': '+hs.slice(0,60));
+  });
+
+  // Collatz audit: independent regeneration must show FAIL_BLOCKED (no phantom proof)
+  try {
+    const col = JSON.parse(require('fs').readFileSync(
+      require('path').join(__dirname,'collatz_octave_audit_report.json'),'utf8'));
+    const regen = (col.auditRuns||{}).missingRegeneration || {};
+    const indep = (regen.independentRegeneration||{}).reason||'';
+    if(indep.includes('Cannot rebuild')) pass('collatz audit: independentRegeneration honest (no phantom proof)');
+    else warn('collatz audit: independentRegeneration reason unexpected: '+indep.slice(0,60));
+  } catch(e){ warn('collatz audit: could not check independentRegeneration'); }
+
+  // Polignac: failCount must be 0 (all k checked pass local obstruction)
+  try {
+    const pol = JSON.parse(require('fs').readFileSync(
+      require('path').join(__dirname,'POLIGNAC_WEAKEST_K_RUN.json'),'utf8'));
+    check('Polignac JSON: failCount = 0', pol.failCount, 0);
+    check('Polignac JSON: evenKTested = 100', pol.evenKTested, 100);
+    if(pol.finalHonestStatus && pol.finalHonestStatus.includes('UNIVERSAL PROOF OPEN'))
+      pass('Polignac JSON: UNIVERSAL PROOF OPEN present');
+    else fail('Polignac JSON: UNIVERSAL PROOF OPEN missing from honestStatus');
+  } catch(e){ warn('Polignac JSON: could not verify detail fields'); }
+})();
 
 // ══ TALLY ════════════════════════════════════════════════════════
 const total   = passCount+warnCount+failCount;

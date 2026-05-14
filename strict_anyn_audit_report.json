@@ -1,0 +1,251 @@
+{
+  "finalHonestStatus": "STRICT FINITE AUDIT COMPLETE / NO PROOF CLAIMS / OPEN CONJECTURE BOUNDARIES REMAIN",
+  "generatedFiles": [
+    "/Users/joannie/Conjunctures/STRICT_ANYN_AUDIT_REPORT.md",
+    "/Users/joannie/Conjunctures/strict_anyn_audit_report.json"
+  ],
+  "inputs": {
+    "N": 10000,
+    "curve": {
+      "a": -1,
+      "b": 1
+    }
+  },
+  "packetSource": {
+    "kind": "html_default",
+    "path": "/Users/joannie/Conjunctures/five_conjecture_workbench.html"
+  },
+  "proofBoundaries": {
+    "BSD Toy Curve": "BSD concerns rank, L-functions, and rational points; bounded integer scanning is only a toy window.",
+    "Goldbach": "Still need a universal proof for every even integer beyond the finite range.",
+    "P vs NP Toy": "P vs NP requires asymptotic complexity proof over all NP problems, not one bounded subset-sum instance.",
+    "Riemann Surface Fence": "This checks a soft prime-counting fence only; it does not address zeta zeros on the critical line.",
+    "Twin Prime": "Still need proof that infinitely many twin-prime pairs exist."
+  },
+  "results": {
+    "BSD Toy Curve": {
+      "checked": "integer x in [-1000, 1000] for y^2 = x^3 + -1x + 1",
+      "details": {
+        "a": -1,
+        "b": 1,
+        "discriminantCore": 23,
+        "pointCount": 12,
+        "pointsSample": [
+          [
+            -1,
+            1
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            -5
+          ],
+          [
+            5,
+            11
+          ],
+          [
+            5,
+            -11
+          ],
+          [
+            56,
+            419
+          ],
+          [
+            56,
+            -419
+          ]
+        ],
+        "xBound": 1000
+      },
+      "failureCondition": "OPEN_WINDOW if no integer points are found in the bounded window; not a proof of no rational points.",
+      "proofBoundary": "BSD concerns rank, L-functions, and rational points; bounded integer scanning is only a toy window.",
+      "proofLevel": "BOUNDED_TOY_SCAN_NOT_BSD_PROOF",
+      "reviewerNote": "No overclaim: bounded integer points do not determine BSD.",
+      "status": "FINITE_POINTS_FOUND"
+    },
+    "Goldbach": {
+      "checked": "verified every even E from 4 to 10000 (4999 values)",
+      "details": {
+        "checkedEvenCount": 4999,
+        "hardestEven": 4,
+        "hardestFirstWitness": [
+          2,
+          2
+        ],
+        "hardestWitnessCount": 1
+      },
+      "failureCondition": "Fail immediately if any even E has zero independently verified prime-pair witnesses.",
+      "proofBoundary": "Still need a universal proof for every even integer beyond the finite range.",
+      "proofLevel": "FINITE_EVIDENCE_NOT_PROOF",
+      "reviewerNote": "Finite evidence only. No overclaim: this does not prove Goldbach.",
+      "status": "FINITE_PASS"
+    },
+    "P vs NP Toy": {
+      "checked": "subset-sum toy search with 21 items; brute masks checked=1024",
+      "details": {
+        "bruteForceMs": 0.7847080123610795,
+        "bruteForceToVerifyRatio": 141.6194573130377,
+        "foundMask": 1023,
+        "size": 21,
+        "target": 507,
+        "verificationMs": 0.005540961865335703,
+        "verified": true
+      },
+      "failureCondition": "Toy failure if no subset found or verification does not match target.",
+      "proofBoundary": "P vs NP requires asymptotic complexity proof over all NP problems, not one bounded subset-sum instance.",
+      "proofLevel": "TOY_DEMONSTRATION_NOT_COMPLEXITY_PROOF",
+      "reviewerNote": "Only demonstrates search versus verification timing on one generated instance.",
+      "status": "TOY_ONLY"
+    },
+    "Riemann Surface Fence": {
+      "checked": "recomputed pi(x) checkpoints up to 10000",
+      "details": {
+        "checkpointCount": 20,
+        "sampleCheckpoints": [
+          {
+            "errorLiApprox": 6.915485975977319,
+            "errorXOverLogX": 14.544403752998761,
+            "liApprox": 101.91548597597732,
+            "liFenceRatio": 0.04976499401034715,
+            "pi": 95,
+            "softFence": 138.96286161592724,
+            "x": 500,
+            "xOverLogFenceRatio": 0.1046639626146829,
+            "xOverLogX": 80.45559624700124
+          },
+          {
+            "errorLiApprox": 9.054838249221007,
+            "errorXOverLogX": 23.235172698916045,
+            "liApprox": 177.054838249221,
+            "liFenceRatio": 0.04145183428699718,
+            "pi": 168,
+            "softFence": 218.442402006354,
+            "x": 1000,
+            "xOverLogFenceRatio": 0.10636750230497917,
+            "xOverLogX": 144.76482730108395
+          },
+          {
+            "errorLiApprox": 7.868039185721699,
+            "errorXOverLogX": 33.89200097840859,
+            "liApprox": 246.8680391857217,
+            "liFenceRatio": 0.027778719561448596,
+            "pi": 239,
+            "softFence": 283.23980766345295,
+            "x": 1500,
+            "xOverLogFenceRatio": 0.11965832507088568,
+            "xOverLogX": 205.1079990215914
+          },
+          {
+            "errorLiApprox": 17.0857325448319,
+            "errorXOverLogX": 128.52993833868913,
+            "liApprox": 1134.085732544832,
+            "liFenceRatio": 0.019780322119233834,
+            "pi": 1117,
+            "softFence": 863.7742318775591,
+            "x": 9000,
+            "xOverLogFenceRatio": 0.1488003850951974,
+            "xOverLogX": 988.4700616613109
+          },
+          {
+            "errorLiApprox": 11.768903954383632,
+            "errorXOverLogX": 139.77419260725833,
+            "liApprox": 1188.7689039543836,
+            "liFenceRatio": 0.013183293614149594,
+            "pi": 1177,
+            "softFence": 892.7134825967995,
+            "x": 9500,
+            "xOverLogFenceRatio": 0.15657228812168433,
+            "xOverLogX": 1037.2258073927417
+          },
+          {
+            "errorLiApprox": 14.140858326558373,
+            "errorXOverLogX": 143.26379524187064,
+            "liApprox": 1243.1408583265584,
+            "liFenceRatio": 0.015353241851499883,
+            "pi": 1229,
+            "softFence": 921.0340371976183,
+            "x": 10000,
+            "xOverLogFenceRatio": 0.1555466893251544,
+            "xOverLogX": 1085.7362047581294
+          }
+        ],
+        "worstLiFence": {
+          "errorLiApprox": 6.915485975977319,
+          "errorXOverLogX": 14.544403752998761,
+          "liApprox": 101.91548597597732,
+          "liFenceRatio": 0.04976499401034715,
+          "pi": 95,
+          "softFence": 138.96286161592724,
+          "x": 500,
+          "xOverLogFenceRatio": 0.1046639626146829,
+          "xOverLogX": 80.45559624700124
+        },
+        "worstXOverLogFence": {
+          "errorLiApprox": 11.768903954383632,
+          "errorXOverLogX": 139.77419260725833,
+          "liApprox": 1188.7689039543836,
+          "liFenceRatio": 0.013183293614149594,
+          "pi": 1177,
+          "softFence": 892.7134825967995,
+          "x": 9500,
+          "xOverLogFenceRatio": 0.15657228812168433,
+          "xOverLogX": 1037.2258073927417
+        }
+      },
+      "failureCondition": "Surface warning if error/fence ratio exceeds chosen soft fence; this is not an RH disproof.",
+      "proofBoundary": "This checks a soft prime-counting fence only; it does not address zeta zeros on the critical line.",
+      "proofLevel": "SURFACE_NUMERICS_NOT_RH_PROOF",
+      "reviewerNote": "Reviewer should reject any claim stronger than surface numerics.",
+      "status": "SURFACE_PASS"
+    },
+    "Twin Prime": {
+      "checked": "recounted all twin pairs p,p+2 with p+2 <= 10000",
+      "details": {
+        "firstPair": [
+          3,
+          5
+        ],
+        "largestPairStartGap": 210,
+        "lastPair": [
+          9929,
+          9931
+        ],
+        "pairCount": 205
+      },
+      "failureCondition": "Fail finite audit if any counted pair is not independently prime; no-pair window is finite failure only.",
+      "proofBoundary": "Still need proof that infinitely many twin-prime pairs exist.",
+      "proofLevel": "FINITE_EVIDENCE_NOT_PROOF",
+      "reviewerNote": "Finite pair count cannot prove infinitude.",
+      "status": "FINITE_PASS"
+    }
+  },
+  "strongestCheck": "Twin Prime",
+  "title": "STRICT ANY-N AUDIT REPORT",
+  "warning": "Finite evidence only. Not proof. No open conjecture is proven here.",
+  "weakestCheck": "P vs NP Toy"
+}

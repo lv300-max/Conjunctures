@@ -1,0 +1,978 @@
+{
+  "Kmax": 200,
+  "N": 100000,
+  "definition": "T(N,k) counts primes p <= N with p+k prime; p+k may lie up to N+Kmax.",
+  "engine": "Polignac Weakest k Engine",
+  "evenKTested": 100,
+  "expectedScale_N_over_log2N": 754.4467880464557,
+  "failCount": 0,
+  "finalHonestStatus": "FINITE POLIGNAC PRESSURE RUN COMPLETE / UNIVERSAL PROOF OPEN",
+  "largestDeadZone": [
+    {
+      "T_N_k": 1244,
+      "c_k": 1.6488903123587817,
+      "firstPair": [
+        3,
+        137
+      ],
+      "k": 134,
+      "largestPairStartDeadZone": 720,
+      "lastPair": [
+        99923,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1204,
+      "c_k": 1.5958713312539978,
+      "firstPair": [
+        5,
+        37
+      ],
+      "k": 32,
+      "largestPairStartDeadZone": 714,
+      "lastPair": [
+        99971,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1304,
+      "c_k": 1.7284187840159577,
+      "firstPair": [
+        3,
+        71
+      ],
+      "k": 68,
+      "largestPairStartDeadZone": 672,
+      "lastPair": [
+        99989,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1228,
+      "c_k": 1.6276827199168682,
+      "firstPair": [
+        3,
+        149
+      ],
+      "k": 146,
+      "largestPairStartDeadZone": 666,
+      "lastPair": [
+        99923,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1257,
+      "c_k": 1.6661214812178367,
+      "firstPair": [
+        3,
+        89
+      ],
+      "k": 86,
+      "largestPairStartDeadZone": 660,
+      "lastPair": [
+        99971,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1260,
+      "c_k": 1.6700979048006954,
+      "firstPair": [
+        3,
+        11
+      ],
+      "k": 8,
+      "largestPairStartDeadZone": 642,
+      "lastPair": [
+        99809,
+        99817
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1224,
+      "c_k": 1.6223808218063898,
+      "firstPair": [
+        3,
+        5
+      ],
+      "k": 2,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99989,
+        99991
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1240,
+      "c_k": 1.6435884142483035,
+      "firstPair": [
+        3,
+        191
+      ],
+      "k": 188,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99881,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1459,
+      "c_k": 1.9338673357969958,
+      "firstPair": [
+        3,
+        199
+      ],
+      "k": 196,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99907,
+        100103
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1267,
+      "c_k": 1.6793762264940326,
+      "firstPair": [
+        7,
+        89
+      ],
+      "k": 82,
+      "largestPairStartDeadZone": 618,
+      "lastPair": [
+        99961,
+        100043
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1249,
+      "c_k": 1.6555176849968798,
+      "firstPair": [
+        3,
+        197
+      ],
+      "k": 194,
+      "largestPairStartDeadZone": 618,
+      "lastPair": [
+        99989,
+        100183
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1262,
+      "c_k": 1.6727488538559345,
+      "firstPair": [
+        11,
+        127
+      ],
+      "k": 116,
+      "largestPairStartDeadZone": 600,
+      "lastPair": [
+        99761,
+        99877
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1245,
+      "c_k": 1.6502157868864014,
+      "firstPair": [
+        5,
+        127
+      ],
+      "k": 122,
+      "largestPairStartDeadZone": 594,
+      "lastPair": [
+        99881,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1292,
+      "c_k": 1.7125130896845226,
+      "firstPair": [
+        3,
+        41
+      ],
+      "k": 38,
+      "largestPairStartDeadZone": 582,
+      "lastPair": [
+        99923,
+        99961
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1294,
+      "c_k": 1.7151640387397618,
+      "firstPair": [
+        3,
+        79
+      ],
+      "k": 76,
+      "largestPairStartDeadZone": 576,
+      "lastPair": [
+        99733,
+        99809
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1348,
+      "c_k": 1.7867396632312202,
+      "firstPair": [
+        3,
+        29
+      ],
+      "k": 26,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99881,
+        99907
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1469,
+      "c_k": 1.9471220810731917,
+      "firstPair": [
+        3,
+        59
+      ],
+      "k": 56,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99767,
+        99823
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1259,
+      "c_k": 1.6687724302730758,
+      "firstPair": [
+        3,
+        97
+      ],
+      "k": 94,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99877,
+        99971
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1274,
+      "c_k": 1.6886545481873698,
+      "firstPair": [
+        3,
+        127
+      ],
+      "k": 124,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99709,
+        99833
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1322,
+      "c_k": 1.7522773255131106,
+      "firstPair": [
+        3,
+        139
+      ],
+      "k": 136,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99907,
+        100043
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    }
+  ],
+  "lowestDensity": [
+    {
+      "T_N_k": 1204,
+      "c_k": 1.5958713312539978,
+      "firstPair": [
+        5,
+        37
+      ],
+      "k": 32,
+      "largestPairStartDeadZone": 714,
+      "lastPair": [
+        99971,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1209,
+      "c_k": 1.602498703892096,
+      "firstPair": [
+        3,
+        131
+      ],
+      "k": 128,
+      "largestPairStartDeadZone": 540,
+      "lastPair": [
+        99929,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1216,
+      "c_k": 1.6117770255854331,
+      "firstPair": [
+        3,
+        7
+      ],
+      "k": 4,
+      "largestPairStartDeadZone": 426,
+      "lastPair": [
+        99877,
+        99881
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1224,
+      "c_k": 1.6223808218063898,
+      "firstPair": [
+        3,
+        5
+      ],
+      "k": 2,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99989,
+        99991
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1228,
+      "c_k": 1.6276827199168682,
+      "firstPair": [
+        3,
+        149
+      ],
+      "k": 146,
+      "largestPairStartDeadZone": 666,
+      "lastPair": [
+        99923,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1233,
+      "c_k": 1.6343100925549663,
+      "firstPair": [
+        3,
+        19
+      ],
+      "k": 16,
+      "largestPairStartDeadZone": 498,
+      "lastPair": [
+        99907,
+        99923
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1240,
+      "c_k": 1.6435884142483035,
+      "firstPair": [
+        3,
+        191
+      ],
+      "k": 188,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99881,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1241,
+      "c_k": 1.644913888775923,
+      "firstPair": [
+        5,
+        163
+      ],
+      "k": 158,
+      "largestPairStartDeadZone": 438,
+      "lastPair": [
+        99971,
+        100129
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1241,
+      "c_k": 1.644913888775923,
+      "firstPair": [
+        7,
+        173
+      ],
+      "k": 166,
+      "largestPairStartDeadZone": 480,
+      "lastPair": [
+        99877,
+        100043
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1244,
+      "c_k": 1.6488903123587817,
+      "firstPair": [
+        3,
+        137
+      ],
+      "k": 134,
+      "largestPairStartDeadZone": 720,
+      "lastPair": [
+        99923,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1245,
+      "c_k": 1.6502157868864014,
+      "firstPair": [
+        5,
+        127
+      ],
+      "k": 122,
+      "largestPairStartDeadZone": 594,
+      "lastPair": [
+        99881,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1246,
+      "c_k": 1.651541261414021,
+      "firstPair": [
+        3,
+        151
+      ],
+      "k": 148,
+      "largestPairStartDeadZone": 540,
+      "lastPair": [
+        99961,
+        100109
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1247,
+      "c_k": 1.6528667359416407,
+      "firstPair": [
+        7,
+        179
+      ],
+      "k": 172,
+      "largestPairStartDeadZone": 480,
+      "lastPair": [
+        99877,
+        100049
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1248,
+      "c_k": 1.6541922104692601,
+      "firstPair": [
+        3,
+        109
+      ],
+      "k": 106,
+      "largestPairStartDeadZone": 528,
+      "lastPair": [
+        99823,
+        99929
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1249,
+      "c_k": 1.6555176849968798,
+      "firstPair": [
+        3,
+        197
+      ],
+      "k": 194,
+      "largestPairStartDeadZone": 618,
+      "lastPair": [
+        99989,
+        100183
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1255,
+      "c_k": 1.6634705321625973,
+      "firstPair": [
+        3,
+        67
+      ],
+      "k": 64,
+      "largestPairStartDeadZone": 474,
+      "lastPair": [
+        99907,
+        99971
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1255,
+      "c_k": 1.6634705321625973,
+      "firstPair": [
+        7,
+        149
+      ],
+      "k": 142,
+      "largestPairStartDeadZone": 498,
+      "lastPair": [
+        99961,
+        100103
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1257,
+      "c_k": 1.6661214812178367,
+      "firstPair": [
+        3,
+        89
+      ],
+      "k": 86,
+      "largestPairStartDeadZone": 660,
+      "lastPair": [
+        99971,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1257,
+      "c_k": 1.6661214812178367,
+      "firstPair": [
+        3,
+        181
+      ],
+      "k": 178,
+      "largestPairStartDeadZone": 552,
+      "lastPair": [
+        99991,
+        100169
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1259,
+      "c_k": 1.6687724302730758,
+      "firstPair": [
+        3,
+        97
+      ],
+      "k": 94,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99877,
+        99971
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    }
+  ],
+  "passCount": 100,
+  "warningCount": 0,
+  "weakestByCount": [
+    {
+      "T_N_k": 1204,
+      "c_k": 1.5958713312539978,
+      "firstPair": [
+        5,
+        37
+      ],
+      "k": 32,
+      "largestPairStartDeadZone": 714,
+      "lastPair": [
+        99971,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1209,
+      "c_k": 1.602498703892096,
+      "firstPair": [
+        3,
+        131
+      ],
+      "k": 128,
+      "largestPairStartDeadZone": 540,
+      "lastPair": [
+        99929,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1216,
+      "c_k": 1.6117770255854331,
+      "firstPair": [
+        3,
+        7
+      ],
+      "k": 4,
+      "largestPairStartDeadZone": 426,
+      "lastPair": [
+        99877,
+        99881
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1224,
+      "c_k": 1.6223808218063898,
+      "firstPair": [
+        3,
+        5
+      ],
+      "k": 2,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99989,
+        99991
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1228,
+      "c_k": 1.6276827199168682,
+      "firstPair": [
+        3,
+        149
+      ],
+      "k": 146,
+      "largestPairStartDeadZone": 666,
+      "lastPair": [
+        99923,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1233,
+      "c_k": 1.6343100925549663,
+      "firstPair": [
+        3,
+        19
+      ],
+      "k": 16,
+      "largestPairStartDeadZone": 498,
+      "lastPair": [
+        99907,
+        99923
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1240,
+      "c_k": 1.6435884142483035,
+      "firstPair": [
+        3,
+        191
+      ],
+      "k": 188,
+      "largestPairStartDeadZone": 630,
+      "lastPair": [
+        99881,
+        100069
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1241,
+      "c_k": 1.644913888775923,
+      "firstPair": [
+        7,
+        173
+      ],
+      "k": 166,
+      "largestPairStartDeadZone": 480,
+      "lastPair": [
+        99877,
+        100043
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1241,
+      "c_k": 1.644913888775923,
+      "firstPair": [
+        5,
+        163
+      ],
+      "k": 158,
+      "largestPairStartDeadZone": 438,
+      "lastPair": [
+        99971,
+        100129
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1244,
+      "c_k": 1.6488903123587817,
+      "firstPair": [
+        3,
+        137
+      ],
+      "k": 134,
+      "largestPairStartDeadZone": 720,
+      "lastPair": [
+        99923,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1245,
+      "c_k": 1.6502157868864014,
+      "firstPair": [
+        5,
+        127
+      ],
+      "k": 122,
+      "largestPairStartDeadZone": 594,
+      "lastPair": [
+        99881,
+        100003
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1246,
+      "c_k": 1.651541261414021,
+      "firstPair": [
+        3,
+        151
+      ],
+      "k": 148,
+      "largestPairStartDeadZone": 540,
+      "lastPair": [
+        99961,
+        100109
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1247,
+      "c_k": 1.6528667359416407,
+      "firstPair": [
+        7,
+        179
+      ],
+      "k": 172,
+      "largestPairStartDeadZone": 480,
+      "lastPair": [
+        99877,
+        100049
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1248,
+      "c_k": 1.6541922104692601,
+      "firstPair": [
+        3,
+        109
+      ],
+      "k": 106,
+      "largestPairStartDeadZone": 528,
+      "lastPair": [
+        99823,
+        99929
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1249,
+      "c_k": 1.6555176849968798,
+      "firstPair": [
+        3,
+        197
+      ],
+      "k": 194,
+      "largestPairStartDeadZone": 618,
+      "lastPair": [
+        99989,
+        100183
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1255,
+      "c_k": 1.6634705321625973,
+      "firstPair": [
+        7,
+        149
+      ],
+      "k": 142,
+      "largestPairStartDeadZone": 498,
+      "lastPair": [
+        99961,
+        100103
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1255,
+      "c_k": 1.6634705321625973,
+      "firstPair": [
+        3,
+        67
+      ],
+      "k": 64,
+      "largestPairStartDeadZone": 474,
+      "lastPair": [
+        99907,
+        99971
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1257,
+      "c_k": 1.6661214812178367,
+      "firstPair": [
+        3,
+        89
+      ],
+      "k": 86,
+      "largestPairStartDeadZone": 660,
+      "lastPair": [
+        99971,
+        100057
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1257,
+      "c_k": 1.6661214812178367,
+      "firstPair": [
+        3,
+        181
+      ],
+      "k": 178,
+      "largestPairStartDeadZone": 552,
+      "lastPair": [
+        99991,
+        100169
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    },
+    {
+      "T_N_k": 1259,
+      "c_k": 1.6687724302730758,
+      "firstPair": [
+        3,
+        97
+      ],
+      "k": 94,
+      "largestPairStartDeadZone": 570,
+      "lastPair": [
+        99877,
+        99971
+      ],
+      "localObstructionPass": true,
+      "status": "PASS"
+    }
+  ]
+}

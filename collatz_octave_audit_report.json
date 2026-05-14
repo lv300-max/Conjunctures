@@ -1,0 +1,257 @@
+{
+  "auditRuns": {
+    "basePartition": {
+      "duplicates": 0,
+      "executed": true,
+      "expectedOddResidues": 32768,
+      "missing": 0,
+      "modulus": 65536,
+      "name": "base partition verifier",
+      "oddResidues": 32768,
+      "pass": true,
+      "scope": "Only verifies the trivial odd-residue partition mod 2^16, not the 84 packet coverage."
+    },
+    "missingRegeneration": {
+      "exactStateClosure": {
+        "claimed": {
+          "compactQuotientOnlyRows": 0,
+          "exactStatesChecked": 1235,
+          "parentsClosed": "578/578"
+        },
+        "executed": false,
+        "pass": false,
+        "reason": "No exact-state closure raw artifact found in repo."
+      },
+      "frontierK27": {
+        "claimed": {
+          "failures": 0,
+          "k27ClassesAudited": 7364628,
+          "labels": 84
+        },
+        "executed": false,
+        "pass": false,
+        "reason": "No k27 symbolic frontier artifact found in repo."
+      },
+      "independentRegeneration": {
+        "packetHash": null,
+        "rawArtifactsFound": [
+          "/Users/joannie/Conjunctures/collatz_octave_audit_report.json"
+        ],
+        "reason": "Cannot rebuild 84 packet or 336 recurrence table from raw rules because raw rules/rows are not present in this repository.",
+        "recurrenceHash": null,
+        "status": "FAIL_BLOCKED_BY_MISSING_RAW_ARTIFACTS"
+      },
+      "labelInvariant": {
+        "claimed": {
+          "duplicateLabelKeys": 0,
+          "missingTargetPacketRows": 0,
+          "nonpassTransitionRows": 0,
+          "packetRecords": 84,
+          "transitionRows": 336,
+          "uniqueLabelKeys": 84
+        },
+        "executed": false,
+        "pass": false,
+        "reason": "No packet labels and transition table found to compare target keys."
+      },
+      "packet84": {
+        "claimed": {
+          "failures": 0,
+          "packetRows": 84,
+          "verified": "84/84"
+        },
+        "executed": false,
+        "pass": false,
+        "reason": "No 84-row packet raw JSON/CSV found in repo."
+      },
+      "recurrence336": {
+        "claimed": {
+          "conflicts": 0,
+          "failures": 0,
+          "missing": 0,
+          "proofGradeRows": 336,
+          "rows": 336
+        },
+        "executed": false,
+        "pass": false,
+        "reason": "No 336-row recurrence table raw JSON/CSV found in repo."
+      }
+    },
+    "octaveMap": {
+      "A_range": "0..20",
+      "argument": "Going from modulus 2^(A+1) to 2^(A+3) multiplies the modulus by 4, so each parent residue has exactly four lifts.",
+      "checkedParentLanes": 4194302,
+      "executed": true,
+      "failures": [],
+      "name": "octave map structural verifier",
+      "pass": true
+    },
+    "test_inequality_chain": {
+      "command": "node test_inequality_chain.js",
+      "pass": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nINEQUALITY CHAIN PROOF SKELETON \u2014 VALIDATION SUITE\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\n1. HTML STRUCTURE TESTS:\n\u2713 Inequality Chain section exists in workbench\n\u2713 Show button present\n\u2713 Export JSON button present\n\u2713 Copy Summary button present\n\u2713 Table body element exists\n\u2713 Panel display element exists\n\n2. JAVASCRIPT FUNCTION TESTS:\n\u2713 runGoldbachInequalityChainProofSkeleton function exists\n\u2713 renderInequalityChain function exists\n\u2713 exportInequalityChainJSON function exists\n\u2713 copyInequalityChainSummary function exists\n\u2713 runInequalityChainProofSkeleton wrapper exists\n\n3. LEMMA DEFINITIONS:\n\u2713 Lemma A defined (Survivor Lower Bound)\n\u2713 Lemma B defined (Growth Floor)\n\u2713 Lemma C defined (No Full Cover Wall)\n\u2713 Lemma D defined (Open Lane Prime Survivor)\n\n4. GOLDBACH DEFINITIONS:\n\u2713 E definition present\n\u2713 S(E) definition present\n\u2713 G(E) and B(E) definitions present\n\u2713 Pressure metric definition present\n\n5. SAFE CLAIM LANGUAGE:\n\u2713 Proof skeleton wording present\n\u2713 PASS meaning clarified\n\u2713 Not proof statement present\n\u2713 No overclaimed language\n\n6. INTEGRATION TESTS:\n\u2713 Function in proofPushResults\n\u2713 Function in makeWorkbenchPacket\n\n7. ENGINE EXECUTION:\n\u2713 Engine runs N=100k\n\u2713 Engine produces lemma statuses\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nVALIDATION SUMMARY\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nPASS:  27/27\nFAIL:  0/27\nSCORE: 100%\n\nSTATUS: \u2713 INEQUALITY CHAIN PROOF SKELETON FULLY INTEGRATED\n\nSECTION INCLUDES:\n  \u2713 HTML section with button, export, copy\n  \u2713 4 Lemmas (A, B, C, D)\n  \u2713 5 Goldbach definitions (E, S, G, B, P)\n  \u2713 Implication chain\n  \u2713 Missing proof line identification\n  \u2713 Safe claim language\n  \u2713 Finite certificate with witness\n  \u2713 JSON export\n  \u2713 Copy to clipboard\n  \u2713 Integrated into proofPushResults\n  \u2713 Integrated into makeWorkbenchPacket\n\nFUNCTIONS WORKING:\n  \u2713 runGoldbachInequalityChainProofSkeleton(N, minE)\n  \u2713 renderInequalityChain()\n  \u2713 exportInequalityChainJSON()\n  \u2713 copyInequalityChainSummary()\n\nNO FAIL ROWS FOUND\n\n"
+    },
+    "test_suite": {
+      "command": "node test_suite.js",
+      "pass": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nCONJUNCTURES WORKBENCH \u2014 COMPREHENSIVE TEST SUITE\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\n\n1. FILE LOADING TESTS:\n\u2713 workbench.html exists and loads\n\u2713 goldbach_fae.html exists and loads\n\u2713 FAE iframe embedded in workbench\n\u2713 All other HTML files exist\n\n2. JAVASCRIPT SYNTAX TESTS:\n\u2713 goldbach_fae.html JS syntax valid\n\u2713 workbench.html JS syntax valid\n\n3. GOLDBACH ENGINE TESTS:\n\u2713 Fail Anticipation Engine (N=100k)\n\u2713 Fail Anticipation Engine (N=50k)\n\u2713 Sieve performance (N=250k)\n\n4. CONTENT VALIDATION TESTS:\n\u2713 FAE has control inputs\n\u2713 FAE has risk score calculation\n\u2713 Workbench has all 7 tabs\n\u2713 All 8 iframes present\n\u2713 JSON export functions exist\n\n5. PROOF CLAIM VALIDATION:\n\u2713 No overclaimed wording in FAE\n\u2713 FAE includes safe claim wording\n\u2713 Workbench core rule is correct\n\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\nTEST SUMMARY\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n\nPASS:  17/17\nFAIL:  0/17\nSCORE: 100%\n\nSTATUS:\n\u2713 ALL TESTS PASS\n\nWORKBENCH CONFIDENCE:\n  Workbench (file + structure):  99%\n  Finite certificate (engines):  99%\n  Lemma path (next steps):       97%\n  Actual proof:                  0\u20135%\n\nFAIL ROWS FOUND: none\n\nBEST THEOREM TARGET:\n  S(E) \u2265 cE / log(E)^2  for all sufficiently large even E\n"
+    },
+    "valuationBreaker": {
+      "examples": [
+        {
+          "S": 1,
+          "exactValuationResidues": [
+            3
+          ],
+          "expression": "3n+1",
+          "hiddenExtraDivisibilityResidues": [
+            1
+          ],
+          "mod2SResiduesInMod2SPlus1": [
+            1,
+            3
+          ]
+        }
+      ],
+      "executed": true,
+      "meaning": "Breaker found explicit residues where divisibility by 2^S is not enough to force exact v2=S. Rows must prove non-divisibility modulo 2^(S+1).",
+      "name": "lane-rule breaker tests",
+      "pass": true
+    },
+    "workbenchSyntax": {
+      "command": "zsh -lc node --check <(sed -n '/<script>/,/<\\/script>/p' workbench.html | sed '1d;$d')",
+      "pass": true,
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "claimedResults": {
+    "basePartition": {
+      "covered": 32768,
+      "duplicates": 0,
+      "missing": 0,
+      "total": 32768
+    },
+    "exactStateClosure": {
+      "compactQuotientOnlyRows": 0,
+      "exactStatesChecked": 1235,
+      "parentsClosed": "578/578"
+    },
+    "octaveRecurrence": {
+      "failures": 0,
+      "newLabels": 0,
+      "stableThrough": "k41"
+    },
+    "packetLabelInvariant": {
+      "duplicateLabelKeys": 0,
+      "missingTargetPacketRows": 0,
+      "nonpassTransitionRows": 0,
+      "packetRecords": 84,
+      "transitionRows": 336,
+      "uniqueLabelKeys": 84
+    },
+    "recurrenceTable": {
+      "conflicts": 0,
+      "failures": 0,
+      "missing": 0,
+      "proofGradeRows": 336,
+      "rows": 336
+    },
+    "symbolicFrontier": {
+      "failures": 0,
+      "k27ClassesAudited": 7364628,
+      "labels": 84
+    },
+    "symbolicPacket": {
+      "failures": 0,
+      "packetRows": 84,
+      "verified": "84/84"
+    }
+  },
+  "finalHonestStatus": "NOT A COLLATZ PROOF FROM THIS REPO / PROOF-ENGINE SCAFFOLD ONLY / FORMAL INDUCTION OPEN",
+  "generatedFiles": [
+    "/Users/joannie/Conjunctures/REVIEWER_CURRENT_STATUS.md",
+    "/Users/joannie/Conjunctures/OCTAVE_MAP_AUDIT.md",
+    "/Users/joannie/Conjunctures/PREPAREDNESS_SCORECARD.md",
+    "/Users/joannie/Conjunctures/collatz_octave_audit_report.json"
+  ],
+  "independentRegeneration": "FAIL_BLOCKED_BY_MISSING_RAW_ARTIFACTS",
+  "inventory": [
+    {
+      "engineName": "Main Conjectures Workbench",
+      "fileName": "workbench.html",
+      "passFail": "SYNTAX_PASS",
+      "proofRelevance": "Low for Collatz octave proof; contains placeholder references, not raw octave artifacts.",
+      "purpose": "Tabbed host with Collatz placeholder, proof-pressure tables, and added prime attack lab."
+    },
+    {
+      "engineName": "Reviewer Q&A Engine",
+      "fileName": "reviewer_qa.html",
+      "passFail": "SOURCE_PRESENT",
+      "proofRelevance": "High for attack-surface documentation; not an independent verifier.",
+      "purpose": "Reviewer-facing Collatz Q&A with defaults for 84 rows, 578/578 closure, and 1235 exact states."
+    },
+    {
+      "engineName": "Claim Gate",
+      "fileName": "claim_gate.html",
+      "passFail": "SOURCE_PRESENT",
+      "proofRelevance": "Medium; correctly identifies coverage, quotient abstraction, and small-case base as gates.",
+      "purpose": "Safe-claim and proof-level gate with Collatz proof obligations."
+    },
+    {
+      "engineName": "Comprehensive Workbench Test Suite",
+      "fileName": "test_suite.js",
+      "passFail": "PASS",
+      "proofRelevance": "Low for Collatz octave proof; useful only as repo smoke test.",
+      "purpose": "Runs repository structure, JS syntax, and Goldbach workbench checks."
+    },
+    {
+      "engineName": "Inequality Chain Validation Suite",
+      "fileName": "test_inequality_chain.js",
+      "passFail": "PASS",
+      "proofRelevance": "None for Collatz octave proof except general safe-claim discipline.",
+      "purpose": "Validates Goldbach inequality-chain UI and safe language."
+    },
+    {
+      "engineName": "Collatz Exact-State Placeholder",
+      "fileName": "workbench.html",
+      "passFail": "PLACEHOLDER_ONLY",
+      "proofRelevance": "Identifies the right proof-facing engine but does not contain closure data.",
+      "purpose": "Placeholder function says exact-state closure should be used and quotient shortcuts avoided unless justified."
+    }
+  ],
+  "mostDangerousUnresolvedIssue": "Exact valuation forcing for all lifts and arbitrary odd integer membership into the packet system remain unproven from available artifacts.",
+  "preparedness": {
+    "acceptedProofProbability": 5,
+    "finiteVerificationQuality": 82,
+    "inductionClarity": 42,
+    "mathematicalRisk": 82,
+    "proofReadiness": 18,
+    "recurrenceQuality": 78,
+    "reproducibility": 75,
+    "reviewerReadiness": 64,
+    "structureQuality": 72
+  },
+  "rawArtifactsFound": [
+    "/Users/joannie/Conjunctures/collatz_octave_audit_report.json"
+  ],
+  "strongestArtifact": "Octave map structural lift and descent inequality algebra.",
+  "title": "COLLATZ OCTAVE ENGINE AUDIT",
+  "topNextProofObligations": [
+    "Commit raw 84 packet, 336 recurrence table, exact-state closure, and frontier artifacts.",
+    "Machine-check exact valuation forcing row-by-row including non-divisibility modulo 2^(S+1).",
+    "Write formal universe-completeness and smallest-counterexample induction documents."
+  ],
+  "topReviewerAttackSurfaces": [
+    "U27 is not found as a complete formal artifact.",
+    "Exact v2 forcing can fail if rows only prove divisibility >= S.",
+    "Bucket + mod96 can hide proof-critical state unless certificate signatures include valuation word, affine constants, bound, and target."
+  ],
+  "warning": "No Collatz proof is claimed. Finite verification, symbolic recurrence, formal induction, and unresolved proof boundary are separated.",
+  "weakestProofBoundary": "Raw packet/recurrence/frontier artifacts are absent, so 84/336/k27/k41 claims are not independently reproducible from this repo."
+}
