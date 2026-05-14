@@ -1,0 +1,51 @@
+{
+  "status": "LEMMA_TABLES_FILLED_NOT_FULL_PROOF",
+  "filledLemmaTargets": {
+    "H1": {
+      "file": "BEAL_H1_BRANCH_EXHAUSTION_LEMMA_TARGET.md",
+      "filled": true,
+      "label": "FINITE_FILLED_OPEN",
+      "remainingGap": "NEEDS_NO_NEW_BRANCH_ARGUMENT"
+    },
+    "H6": {
+      "file": "BEAL_H6_INFINITE_LIFT_RULE_LEMMA_TARGET.md",
+      "filled": true,
+      "label": "FINITE_GOLD_FILLED_OPEN",
+      "families": 9,
+      "testedLayers": [7, 49, 343, 2401],
+      "remainingGap": "NEEDS_INDUCTION_STEP_FOR_ALL_K"
+    },
+    "H4": {
+      "file": "BEAL_H4_FOURTH_FACTOR_CLOSURE_LEMMA_TARGET.md",
+      "filled": true,
+      "label": "FACTOR_TABLE_FILLED_OPEN",
+      "knownRows": 2,
+      "remainingGap": "NEEDS_ALL_RANGE_FOURTH_TARGET_CASE_SPLIT"
+    },
+    "H5": {
+      "file": "BEAL_H5_MIXED_POWER_GENERAL_RULE_LEMMA_TARGET.md",
+      "filled": true,
+      "label": "MIXED_TABLE_FILLED_OPEN",
+      "knownCases": 3,
+      "remainingGap": "NEEDS_LOCAL_TO_GLOBAL_MIXED_RULE"
+    }
+  },
+  "filledNextLayer": {
+    "H6": {
+      "file": "BEAL_H6_INDUCTION_STEP_FILLED.md",
+      "status": "CONDITIONAL_FORMAL",
+      "read": "same tracked +/-1 path cannot become 0 at the next 7-adic layer"
+    },
+    "H1": {
+      "file": "BEAL_H1_BRANCH_EXHAUSTION_FILL.md",
+      "status": "FINITE_FILLED_UNIVERSAL_OPEN",
+      "read": "known branches route cleanly, current data does not falsify H1, but the new-branch bucket must be proven empty universally",
+      "newBranchBucketAudit": {
+        "file": "BEAL_H1_NEW_BRANCH_BUCKET_AUDIT.json",
+        "finiteVerdict": "FINITE_NO_NEW_BRANCH_BUCKET_FOUND",
+        "universalStatus": "UNIVERSAL_H1_NOT_PROVEN"
+      }
+    }
+  },
+  "nextAction": "prove or falsify that the H1 new-branch bucket is empty"
+}

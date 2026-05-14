@@ -1,0 +1,44 @@
+{
+  "status": "H1_NEW_BRANCH_BUCKET_AUDIT_COMPLETE",
+  "finiteVerdict": "FINITE_NO_NEW_BRANCH_BUCKET_FOUND",
+  "universalStatus": "UNIVERSAL_H1_NOT_PROVEN",
+  "highestBase": 12500,
+  "dangerAtHighestBase": 0,
+  "valueTemplatesAtHighestBase": 39,
+  "rawMiss1HitsAtHighestBase": 106,
+  "knownBranchesAssigned": true,
+  "unknownTotalKnown": 0,
+  "newBranchSamples": [],
+  "unknownByBase": [
+    {
+      "base": 2000,
+      "otherUnknown": 0
+    },
+    {
+      "base": 3000,
+      "otherUnknown": 0
+    },
+    {
+      "base": 4000,
+      "otherUnknown": 0
+    },
+    {
+      "base": 5000,
+      "otherUnknown": 0
+    },
+    {
+      "base": 7500,
+      "otherUnknown": 0
+    },
+    {
+      "base": 10000,
+      "otherUnknown": 0
+    },
+    {
+      "base": 12500,
+      "otherUnknown": 0
+    }
+  ],
+  "proofRead": "Existing data does not falsify H1: no known sample or mechanism count lands in NEW_BRANCH. This is finite evidence only; universal H1 still needs a no-new-branch theorem.",
+  "nextAction": "turn the finite decision tree into an exponent-signature exhaustion argument"
+}

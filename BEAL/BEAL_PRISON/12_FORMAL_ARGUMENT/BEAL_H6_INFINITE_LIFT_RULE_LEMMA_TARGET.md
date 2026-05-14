@@ -2,9 +2,11 @@
 
 ## Status
 
-OPEN / NEXT_GATE
+CONDITIONAL_FORMAL / H1_DEPENDENT
 
-This is a lemma target, not a proven infinite lifting theorem.
+This is now a conditional infinite lifting theorem inside the 9 tracked paths.
+It is not a standalone Beal proof because H1 must still deliver every relevant
+candidate into a tracked path or a closed branch.
 
 ## Lemma Statement
 
@@ -27,7 +29,7 @@ Delta_F = A^x + B^y - C^z
 
 ## Label
 
-FINITE_GOLD_TO_FORMAL_TARGET
+CONDITIONAL_FORMAL
 
 ## Full Picture
 
@@ -39,11 +41,11 @@ FINITE_GOLD_TO_FORMAL_TARGET
 | WHERE | 7-adic lifting layer |
 | WHY | `+/-1 mod 7^k` is incompatible with `0 mod 7^k` on the same residue path |
 | HOW | prove lift recurrence preserves miss-1 side and blocks zero closure |
-| WHAT BLOCKS IT | no formal all-layer membership-stability proof yet |
+| WHAT BLOCKS IT | H1 branch membership delivery into tracked paths |
 | WHAT WOULD BREAK IT | any same-family lift with `Delta = 0 mod 7^k` |
 | WHETHER THE BLOCKER CHANGES | no in tested layers; open for all layers |
-| CURRENT STATUS | FINITE_GOLD / OPEN_FORMAL_TARGET |
-| NEXT ACTION | prove recurrence and family membership stability for all `k` |
+| CURRENT STATUS | CONDITIONAL_FORMAL / NEEDS_H1_MEMBERSHIP |
+| NEXT ACTION | prove H1 branch exhaustion and tracked-path membership delivery |
 
 ## Recurrence Target
 
@@ -106,10 +108,11 @@ L_F = x*A0^(x-1)*u + y*B0^(y-1)*v - z*C0^(z-1)*w mod 7
 
 ```text
 The 9 tracked families are filled as finite-gold recurrence rows.
-The infinite lift rule is still open.
+The infinite lift rule is conditional-formal inside tracked paths.
 ```
 
-The table is no longer missing. The missing piece is proving the table's lifting pattern must continue forever.
+The table is no longer missing. The remaining piece is proving that every
+relevant candidate is delivered into a tracked path or a closed branch.
 
 ## Filled Conditional Induction Step
 

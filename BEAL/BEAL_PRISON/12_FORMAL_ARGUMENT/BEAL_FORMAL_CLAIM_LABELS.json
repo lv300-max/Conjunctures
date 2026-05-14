@@ -1,0 +1,58 @@
+{
+  "labels": [
+    {
+      "claim": "Danger definition",
+      "label": "FORMAL",
+      "status": "locked",
+      "reason": "Danger is defined as gcd(A,B,C)=1 and exact equality."
+    },
+    {
+      "claim": "Roof clean base 12500",
+      "label": "FINITE_GOLD",
+      "status": "finite evidence",
+      "reason": "Danger stayed 0 and closest miss stayed 1 through base 12500 / exp 8."
+    },
+    {
+      "claim": "Pure cube closure",
+      "label": "KNOWN_THEOREM",
+      "status": "closed",
+      "reason": "Exact danger becomes a^3+b^3=c^3, blocked by Fermat exponent 3."
+    },
+    {
+      "claim": "Sixth bridge closure",
+      "label": "FORMAL_REDUCTION + KNOWN_THEOREM",
+      "status": "closed",
+      "reason": "a^6=(a^2)^3 reduces sixth bridge to the cube wall."
+    },
+    {
+      "claim": "Fourth target",
+      "label": "CONTAINED",
+      "status": "contained",
+      "reason": "C^4-B^4 factors as (C-B)(C+B)(C^2+B^2), but full closure is still open."
+    },
+    {
+      "claim": "Mixed power",
+      "label": "ISOLATED",
+      "status": "open general rule",
+      "reason": "Local audit found no growing family, but no all-range rule exists."
+    },
+    {
+      "claim": "Mod7 obstruction",
+      "label": "FINITE_GOLD",
+      "status": "tested gold",
+      "reason": "Nine mod-7 families support miss-1 and admit no miss-0 closure in the tested ledger."
+    },
+    {
+      "claim": "Mod7 lifting",
+      "label": "FINITE_GOLD",
+      "status": "tested gold",
+      "reason": "The obstruction persisted through mod 49, mod 343, and tested mod 2401."
+    },
+    {
+      "claim": "All-range mod7 lifting",
+      "label": "OPEN / NEXT_GATE",
+      "status": "not proven",
+      "reason": "Finite lifting behavior has not yet been promoted to an all-range proof."
+    }
+  ]
+}

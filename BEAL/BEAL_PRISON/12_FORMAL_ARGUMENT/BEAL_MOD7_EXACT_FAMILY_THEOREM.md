@@ -3,8 +3,8 @@
 ## Status
 
 ```text
-Theorem status: OPEN / STUB_WRITTEN
-Evidence:       FINITE_GOLD (9 families tracked; 18 canonical exact families referenced)
+Theorem status: FORMAL for nonzero-mod-7 cube case / CONDITIONAL_FORMAL for tracked zero-base lift
+Evidence:       complete mod-7 cube-residue enumeration; 9 tracked zero-base families
 Last updated:   May 13, 2026
 ```
 

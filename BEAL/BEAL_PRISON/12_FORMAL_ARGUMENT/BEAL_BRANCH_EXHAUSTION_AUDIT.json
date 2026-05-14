@@ -1,0 +1,51 @@
+{
+  "status": "KNOWN_BRANCHES_ASSIGNED",
+  "branchCount": 4,
+  "assignedKnownBranches": 4,
+  "unassignedKnownBranches": 0,
+  "openAssignedBranches": [
+    "FOURTH_POWER_TARGET_BRANCH",
+    "MIXED_POWER_BRANCH"
+  ],
+  "syntheticOpenGap": "OPEN",
+  "remainingGap": "Prove no branch outside the current topology appears, and prove contained/isolated branches cannot become exact no-family equality.",
+  "nextGate": "BRANCH_MEMBERSHIP_STABILITY_TARGET",
+  "branches": [
+    {
+      "id": "PURE_CUBE_BRANCH",
+      "title": "Pure Cube Branch",
+      "status": "CLOSED",
+      "assignment": "assigned",
+      "claim": "Pure cube exact danger reduces to a^3 + b^3 = c^3 and is blocked by Fermat exponent 3.",
+      "gap": "none",
+      "nextAction": "cite closure cleanly"
+    },
+    {
+      "id": "SIXTH_POWER_BRIDGE_BRANCH",
+      "title": "Sixth-Power Bridge Branch",
+      "status": "CLOSED",
+      "assignment": "assigned",
+      "claim": "a^6 + b^3 = c^3 rewrites as (a^2)^3 + b^3 = c^3 and reduces to the cube wall.",
+      "gap": "none",
+      "nextAction": "cite closure cleanly"
+    },
+    {
+      "id": "FOURTH_POWER_TARGET_BRANCH",
+      "title": "Fourth-Power Target Branch",
+      "status": "CONTAINED",
+      "assignment": "assigned-open-gap",
+      "claim": "Fourth-power target cases are factor-wall contained but not yet fully closed.",
+      "gap": "needs closure",
+      "nextAction": "build full factor-wall closure"
+    },
+    {
+      "id": "MIXED_POWER_BRANCH",
+      "title": "Mixed-Power Branch",
+      "status": "ISOLATED",
+      "assignment": "assigned-open-gap",
+      "claim": "Mixed-power cases are isolated in current tests but not fully generalized.",
+      "gap": "needs general rule",
+      "nextAction": "build mixed-power general rule"
+    }
+  ]
+}

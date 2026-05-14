@@ -1,0 +1,23 @@
+{
+  "rule": "BRANCH_EXHAUSTION_PLUS_INFINITE_LIFT_RULE",
+  "status": "RULE_TARGET_NOT_FULL_PROOF",
+  "formalCore": "A tracked path with Delta = +/-1 mod 7^k cannot become Delta = 0 mod 7^(k+1) along the same path.",
+  "finiteGoldInput": {
+    "families": 9,
+    "miss1Families": 9,
+    "miss0ClosureFamilies": 0,
+    "testedLayers": [7, 49, 343, 2401],
+    "sideMixing": 0,
+    "mechanismMixing": 0
+  },
+  "branchAssignments": {
+    "pureCube": "CLOSED",
+    "sixthBridge": "REDUCED_TO_CLOSED_CUBE",
+    "fourthTarget": "CONTAINED",
+    "mixedPower": "ISOLATED",
+    "mod7LiftedFamilies": "FINITE_GOLD_WITH_FORMAL_CORE",
+    "newOrUnassignedBranch": "OPEN"
+  },
+  "remainingGap": "Prove every relevant no-family branch is assigned to closed, reduced, contained, isolated, or lifted.",
+  "nextAction": "BEAL_BRANCH_EXHAUSTION_LEDGER"
+}

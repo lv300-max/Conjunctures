@@ -1,0 +1,14 @@
+{
+  "status": "FORMAL_LAYER_BUILT_NOT_FULL_PROOF",
+  "families": 9,
+  "finiteGoldFamilies": 9,
+  "testedLayers": [
+    7,
+    49,
+    343,
+    2401
+  ],
+  "exactFormalObservation": "A residue path with Delta = +/-1 mod 7^k cannot also be Delta = 0 mod 7^k or mod 7^(k+1) along the same path.",
+  "remainingGap": "Prove every relevant branch member remains in an obstructed lifted family, or prove the recurrence excludes miss-0 closure for all higher layers.",
+  "nextGate": "BRANCH_EXHAUSTION_PLUS_INFINITE_LIFT_RULE"
+}
