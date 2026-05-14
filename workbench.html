@@ -1242,6 +1242,34 @@ The output is evidence, witness generation, and gap detection.</pre>
           </div>
         </div>
 
+        <!-- Cramér Model Variance Engine -->
+        <div style="background:#0a1a10;border:1px solid #ff9944;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:bold;color:#ff9944;margin-bottom:6px;">
+            &#9654; Cramér Model Variance Engine
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+            For each even k, compares observed T(N,k) to the Hardy–Littlewood prediction
+            E(N,k)&nbsp;=&nbsp;(N/ln²N)·C(k) and computes the standardised deviation
+            z&nbsp;=&nbsp;(T−E)/√E. Ranks gaps by how far they deviate from the model.
+            <strong style="color:var(--yellow);">Finite numerical comparison only. Polignac conjecture OPEN.</strong>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <label style="font-size:12px;color:#ff9944;">N:</label>
+            <input id="cvScanN" type="number" value="50000" min="1000" max="500000" step="1000"
+              style="width:90px;background:#020812;border:1px solid #ff9944;color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;">
+            <label style="font-size:12px;color:#ff9944;">k max:</label>
+            <input id="cvKmax" type="number" value="50" min="2" max="200" step="2"
+              style="width:60px;background:#020812;border:1px solid #ff9944;color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;">
+            <button class="btn-gold" onclick="runCramerVarianceEngine()" style="background:#1a0e00;border:1px solid #ff9944;color:#ff9944;">&#9654; Run Cramér Variance</button>
+            <button class="btn-gold" onclick="exportCramerVarianceJson()" style="background:#1d1705;border:1px solid var(--gold);color:var(--gold);">&#128196; Export JSON</button>
+            <button class="btn-gold" onclick="exportCramerVarianceMd()" style="background:#0d1f2d;border:1px solid var(--cyan);color:var(--cyan);">&#128196; Export .md</button>
+          </div>
+          <div id="cramerVarianceOut"></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:6px;">
+            CRAMÉR MODEL VARIANCE ENGINE / FINITE NUMERICAL COMPARISON ONLY / CONJECTURE OPEN
+          </div>
+        </div>
+
       </section>
 
       <section id="attackLab" style="display:none;height:100%;overflow:auto;padding:14px;background:radial-gradient(circle at 8% 0%, rgba(126,231,255,.08), transparent 28%),linear-gradient(180deg,#071522,#030911);" aria-label="Prime Theory Attack Lab">
@@ -15423,6 +15451,158 @@ function exportFingerprintBatchMd(){
   const blob = new Blob([md],{type:'text/markdown'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='fingerprint_batch_'+Date.now()+'.md'; a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CRAMÉR MODEL VARIANCE ENGINE
+// For each even k in [2..Kmax], compare observed pair count T(N,k)
+// to Hardy-Littlewood expected E(N,k) = (N/ln²N)·C(k).
+// Compute z = (T-E)/√E and rank gaps by deviation from the model.
+// HONEST: finite numerical comparison only. Polignac conjecture OPEN.
+// ═══════════════════════════════════════════════════════════════════
+
+window._cramerVarianceData = null;
+
+function _cvSingularSeries(k, smallPrimes){
+  if(k % 2 !== 0) return 0;
+  const C2 = 0.6601618158468696;
+  let prod = 1;
+  for(const p of smallPrimes){
+    if(p === 2) continue;
+    if(k % p === 0) prod *= (p - 1) / (p - 2);
+  }
+  return 2 * C2 * prod;
+}
+
+function runCramerVarianceEngine(){
+  const out   = document.getElementById('cramerVarianceOut');
+  const scanN = parseInt(document.getElementById('cvScanN').value) || 50000;
+  const kMax  = parseInt(document.getElementById('cvKmax').value)  || 50;
+
+  out.innerHTML = '<span style="color:#aaa">Running\u2026 (N=' + scanN.toLocaleString() + ', k\u202f\u2264\u202f' + kMax + ')</span>';
+
+  setTimeout(function(){
+    const t0 = performance.now();
+
+    const limit = scanN + kMax;
+    const comp  = new Uint8Array(limit + 1);
+    for(let i = 2; i * i <= limit; i++) if(!comp[i]) for(let j = i*i; j <= limit; j += i) comp[j] = 1;
+
+    const smallP = sieve(Math.max(kMax, 30));
+    const lnN    = Math.log(scanN);
+    const base   = scanN / (lnN * lnN);
+
+    const rows = [];
+    let sumZ = 0, sumZ2 = 0;
+
+    for(let k = 2; k <= kMax; k += 2){
+      const C_k = _cvSingularSeries(k, smallP);
+      const E_k = base * C_k;
+      let T_k = 0;
+      for(let p = 3; p <= scanN; p += 2) if(!comp[p] && !comp[p+k]) T_k++;
+      const z     = E_k > 0 ? (T_k - E_k) / Math.sqrt(E_k) : 0;
+      const ratio = E_k > 0 ? +(T_k / E_k).toFixed(4) : null;
+      sumZ  += z;
+      sumZ2 += z * z;
+      rows.push({ k, T_k, E_k: +E_k.toFixed(2), C_k: +C_k.toFixed(6),
+                  z: +z.toFixed(3), ratio });
+    }
+
+    const n      = rows.length;
+    const meanZ  = +(sumZ / n).toFixed(4);
+    const varZ   = +(sumZ2 / n - (sumZ/n)**2).toFixed(4);
+    const maxDev = rows.reduce((a,r) => Math.abs(r.z) > Math.abs(a.z) ? r : a);
+    const minDev = rows.reduce((a,r) => Math.abs(r.z) < Math.abs(a.z) ? r : a);
+    const elapsed = (performance.now() - t0).toFixed(1);
+    const sorted  = [...rows].sort((a,b) => Math.abs(b.z) - Math.abs(a.z));
+
+    window._cramerVarianceData = {
+      engine: 'CRAMER_VARIANCE_ENGINE',
+      N: scanN, KmaxEven: kMax,
+      base_N_over_ln2N: +base.toFixed(4),
+      rows,
+      stats: { n, meanZ, varZ, maxDevRow: maxDev, minDevRow: minDev },
+      proofStatus: { universalProof:'OPEN', finiteEvidenceOnly:true, cramerConjectureOpen:true },
+      finalLabel: 'CRAMÉR MODEL VARIANCE — FINITE NUMERICAL COMPARISON ONLY — CONJECTURE OPEN',
+      timestamp: new Date().toISOString(),
+    };
+
+    let html = `<div style="font-size:13px;font-weight:bold;color:#ff9944;margin-bottom:10px;">
+      CRAMÉR MODEL VARIANCE ENGINE &mdash; N\u202f=\u202f${scanN.toLocaleString()}, even k\u202f\u2208\u202f[2,\u202f${kMax}]</div>`;
+    html += `<div style="margin-bottom:10px;font-size:12px;color:#aaa">
+      E(N,k)\u202f=\u202f(N/ln\u00b2N)\u00b7C(k) &nbsp;|\u202f z\u202f=\u202f(T\u2212E)/\u221aE &nbsp;|&nbsp;
+      Mean\u202fz\u202f=\u202f<b style="color:#ffe066">${meanZ}</b> &nbsp;|\u202f
+      Var(z)\u202f=\u202f<b style="color:#ffe066">${varZ}</b> &nbsp;|\u202f Elapsed:\u202f${elapsed}\u202fms</div>`;
+    html += `<div style="margin-bottom:8px;font-size:12px;">
+      <span style="color:#ff9944">Most deviant:</span> k=${maxDev.k} T=${maxDev.T_k} E=${maxDev.E_k}
+      z=<b style="color:#ff6666">${maxDev.z>0?'+':''}${maxDev.z}\u03c3</b> &nbsp;&nbsp;
+      <span style="color:#66ff99">Closest to model:</span> k=${minDev.k} T=${minDev.T_k} E=${minDev.E_k}
+      z=<b style="color:#66ff99">${minDev.z>0?'+':''}${minDev.z}\u03c3</b></div>`;
+    html += `<table style="font-size:11px;border-collapse:collapse;width:100%;margin-bottom:8px;">
+      <tr style="color:#aaa;border-bottom:1px solid #333;">
+        <th style="text-align:left;padding:2px 6px;">k</th>
+        <th style="text-align:right;padding:2px 6px;">T(N,k)</th>
+        <th style="text-align:right;padding:2px 6px;">E(N,k)</th>
+        <th style="text-align:right;padding:2px 6px;">C(k)</th>
+        <th style="text-align:right;padding:2px 6px;">T/E</th>
+        <th style="text-align:right;padding:2px 6px;">z (\u03c3)</th>
+      </tr>`;
+    sorted.slice(0,15).forEach(r => {
+      const zc = r.z > 1.5 ? '#ff6666' : r.z < -1.5 ? '#6699ff' : '#ffe066';
+      html += `<tr style="border-bottom:1px solid #222;">
+        <td style="padding:2px 6px;color:#ff9944">${r.k}</td>
+        <td style="text-align:right;padding:2px 6px;">${r.T_k}</td>
+        <td style="text-align:right;padding:2px 6px;">${r.E_k}</td>
+        <td style="text-align:right;padding:2px 6px;">${r.C_k}</td>
+        <td style="text-align:right;padding:2px 6px;">${r.ratio??'&mdash;'}</td>
+        <td style="text-align:right;padding:2px 6px;color:${zc};font-weight:bold;">${r.z>0?'+':''}${r.z}</td>
+      </tr>`;
+    });
+    html += '</table>';
+    html += `<div style="font-size:11px;color:#888;margin-top:6px;">
+      \u26a0 CRAMÉR MODEL VARIANCE — FINITE NUMERICAL COMPARISON ONLY.<br>
+      |z|\u202f&lt;\u202f2 is expected for finite N. No z-score constitutes a proof.
+      Polignac conjecture remains OPEN. Hardy\u2013Littlewood conjecture remains OPEN.</div>`;
+    out.innerHTML = html;
+  }, 20);
+}
+
+function exportCramerVarianceJson(){
+  const d = window._cramerVarianceData;
+  if(!d){ alert('Run the Cramér Variance Engine first.'); return; }
+  const blob = new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cramer_variance_'+d.timestamp.slice(0,10)+'.json'; a.click();
+}
+
+function exportCramerVarianceMd(){
+  const d = window._cramerVarianceData;
+  if(!d){ alert('Run the Cramér Variance Engine first.'); return; }
+  const sorted = [...d.rows].sort((a,b)=>Math.abs(b.z)-Math.abs(a.z));
+  const lines = [
+    '# Cramér Model Variance Engine',
+    '',`**N:** ${d.N.toLocaleString()}  `,
+    `**Even k range:** [2, ${d.KmaxEven}]  `,
+    `**Timestamp:** ${d.timestamp}`,'',
+    '## Statistics',
+    `- Mean z: ${d.stats.meanZ}`,
+    `- Var(z): ${d.stats.varZ}`,
+    `- Most deviant: k=${d.stats.maxDevRow.k}, z=${d.stats.maxDevRow.z>0?'+':''}${d.stats.maxDevRow.z}σ`,
+    `- Closest to model: k=${d.stats.minDevRow.k}, z=${d.stats.minDevRow.z>0?'+':''}${d.stats.minDevRow.z}σ`,'',
+    '## Rows (sorted by |z|)',
+    '| k | T(N,k) | E(N,k) | C(k) | T/E | z(σ) |',
+    '|---|--------|--------|------|-----|------|',
+    ...sorted.map(r=>`| ${r.k} | ${r.T_k} | ${r.E_k} | ${r.C_k} | ${r.ratio??'—'} | ${r.z>0?'+':''}${r.z} |`),'',
+    '## Proof Status',
+    `- Universal proof: ${d.proofStatus.universalProof}`,
+    `- Cramér conjecture open: ${d.proofStatus.cramerConjectureOpen}`,'',
+    `**${d.finalLabel}**`,
+  ];
+  const blob = new Blob([lines.join('\n')],{type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cramer_variance_'+d.timestamp.slice(0,10)+'.md'; a.click();
 }
 
 // Run self-tests after DOM is ready, non-blocking

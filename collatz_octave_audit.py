@@ -24,7 +24,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 STATUS_MD = ROOT / "REVIEWER_CURRENT_STATUS.md"
 OCTAVE_MD = ROOT / "OCTAVE_MAP_AUDIT.md"
-SCORE_MD = ROOT / "PREPAREDNESS_SCORECARD.md"
+SCORE_MD = ROOT / "COLLATZ_OCTAVE_SCORECARD.md"  # separate from curated PREPAREDNESS_SCORECARD.md
 JSON_OUT = ROOT / "collatz_octave_audit_report.json"
 
 

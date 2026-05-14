@@ -388,6 +388,50 @@ check('source patches admissible = ',
   } catch(e){ warn('Polignac JSON: could not verify detail fields'); }
 })();
 
+// ══ CRAMÉR VARIANCE ENGINE SOURCE CHECKS ═════════════════════════
+[
+  'function runCramerVarianceEngine(',
+  'function exportCramerVarianceJson(',
+  'function exportCramerVarianceMd(',
+  'function _cvSingularSeries(',
+  'id="cramerVarianceOut"',
+  'id="cvScanN"',
+  'id="cvKmax"',
+  'runCramerVarianceEngine()',
+  'CRAMÉR MODEL VARIANCE',
+  'CONJECTURE OPEN',
+  'universalProof:\'OPEN\'',
+  'cramerConjectureOpen:true',
+  'CRAMER_VARIANCE_ENGINE',
+  'finiteEvidenceOnly:true',
+].forEach(s => check('CVE src contains: '+s, src.includes(s), true));
+
+// Node-side: _cvSingularSeries math
+(function(){
+  const C2 = 0.6601618158468696;
+  // k=2: no odd prime divides 2, prod=1 => 2*C2
+  function cvSingularSeries(k, smallPrimes){
+    if(k % 2 !== 0) return 0;
+    let prod = 1;
+    for(const p of smallPrimes){
+      if(p === 2) continue;
+      if(k % p === 0) prod *= (p-1)/(p-2);
+    }
+    return 2 * C2 * prod;
+  }
+  const p30 = sieve(30);
+  check('_cvSingularSeries(1,…)=0 (odd k)',   cvSingularSeries(1,p30), 0);
+  check('_cvSingularSeries(2,…)≈2*C2',        Math.abs(cvSingularSeries(2,p30) - 2*C2) < 1e-9, true);
+  // k=6: p=3 divides 6 => prod=(3-1)/(3-2)=2 => 4*C2
+  check('_cvSingularSeries(6,…)≈4*C2',        Math.abs(cvSingularSeries(6,p30) - 4*C2) < 1e-9, true);
+  // k=30: p=3 and p=5 divide 30 => prod=2*(4/3)=8/3
+  const expected30 = 2*C2*(2)*(4/3);
+  check('_cvSingularSeries(30,…)≈2*C2*(2)*(4/3)', Math.abs(cvSingularSeries(30,p30) - expected30) < 1e-9, true);
+  // C(k) > 0 for all even k
+  [2,4,6,8,10,12].forEach(k =>
+    check('_cvSingularSeries('+k+',…)>0', cvSingularSeries(k,p30) > 0, true));
+})();
+
 // ══ TALLY ════════════════════════════════════════════════════════
 const total   = passCount+warnCount+failCount;
 const verdict = failCount>0?'FAIL':warnCount>0?'PASS WITH WARNINGS':'PASS';
